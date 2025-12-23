@@ -12,6 +12,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@aws-amplify/ui-vue": "^4.3.7",
     "@capacitor/app": "8.0.0",
     "@capacitor/core": "8.0.0",
     "@capacitor/haptics": "8.0.0",
@@ -19,8 +20,14 @@
     "@capacitor/status-bar": "8.0.0",
     "@ionic/vue": "^8.0.0",
     "@ionic/vue-router": "^8.0.0",
+    "@vueuse/core": "^14.1.0",
+    "aws-amplify": "^6.15.9",
+    "chart.js": "^4.5.1",
+    "date-fns": "^4.1.0",
     "ionicons": "^7.0.0",
+    "pinia": "^3.0.4",
     "vue": "^3.3.0",
+    "vue-chartjs": "^5.3.3",
     "vue-router": "^4.2.0"
   },
   "devDependencies": {
