@@ -1,0 +1,7 @@
+{
+  "name": "OutOfStock",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue-vite"
+}
