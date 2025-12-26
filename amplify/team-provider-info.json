@@ -10,6 +10,11 @@
       "StackName": "amplify-outofstock-dev-58d2c",
       "StackId": "arn:aws:cloudformation:us-east-1:122869747458:stack/amplify-outofstock-dev-58d2c/623dddc0-dfbd-11f0-9d27-0eb319eb1631",
       "AmplifyAppId": "d1brtnp2s3shex"
+    },
+    "categories": {
+      "auth": {
+        "outofstockb7ac9184": {}
+      }
     }
   }
 }
