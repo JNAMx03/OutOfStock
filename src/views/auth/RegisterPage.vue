@@ -47,15 +47,19 @@
                             <ul>
                                 <li :class="{valid:password.length >= 8}">
                                     <ion-icon :icon="password.length >= 8 ? checkmarkCircle : closeCircle" ></ion-icon>
+                                    Mínimo 8 caracteres
                                 </li>
                                 <li :class="{ valid: /[A-Z]/.test(password) }">
                                     <ion-icon :icon="/[A-Z]/.test(password) ? checkmarkCircle : closeCircle"></ion-icon>
+                                    Una letra mayúscula
                                 </li>
                                 <li :class="{ valid: /[a-z]/.test(password) }">
                                     <ion-icon :icon="/[a-z]/.test(password) ? checkmarkCircle : closeCircle"></ion-icon>
+                                    Una letra minúscula
                                 </li>
                                 <li :class="{ valid: /[0-9]/.test(password) }">
                                     <ion-icon :icon="/[0-9]/.test(password) ? checkmarkCircle : closeCircle"></ion-icon>
+                                    Un número
                                 </li>
                             </ul>
                         </div>
