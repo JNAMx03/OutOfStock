@@ -52,7 +52,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/dashboard',
     name: 'Dashboard',
-    component: () => {'@/views/DashboardPage.vue'},
+    component: () => import('@/views/DashboardPage.vue'),
     meta: { requiresAuth: true, //requiere estar logueado
       roles: ['owner', 'admin', 'seller'], //todos los roles pueden acceder
     },

@@ -70,12 +70,12 @@
 
 <style>
   :root{
-    --app-background: #f8f9fa;
+    --app-background: #121212;
   }
 
   /*fondo de la app*/
   ion-content{
-    --background: var(--app--background);
+    --background: var(--app-background);
   }
 
   /*scroll siave en toda la app*/

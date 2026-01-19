@@ -96,7 +96,7 @@ export const useAuthStore = defineStore('auth', () => {
             //manejo de errores especificos
             let errorMessage = 'Error al iniciar sesión';
 
-            if(error.code === "UserNotFounfException"){
+            if(error.code === "UserNotFoundException"){
                 errorMessage = 'Usuario no encontrado';
             }else if(error.code === "NotAuthorizedException"){
                 errorMessage = 'Email o Contraseña incorrecta';

@@ -14,13 +14,13 @@
                         <h2 class="form-tittle">Iniciar Sesión</h2>
                         <!-- correo -->
                         <ion-item lines="none" class="input.item">
-                            <Ion-label position="floating">Email</Ion-label>
+                            <ion-label position="floating">Email</ion-label>
                             <ion-input type="email" v-model="email" placeholder="tu@email.com" @keyup.enter="handleLogin"></ion-input>
                         </ion-item>
 
                         <!-- contraseña -->
                         <ion-item lines="none" class="input-item">
-                            <Ion-label position="floating">Contraseña</Ion-label>
+                            <ion-label position="floating">Contraseña</ion-label>
                             <ion-input type="password" v-model="password" placeholder="********" @keyup.enter="handleLogin"></ion-input>
                         </ion-item>
 
@@ -50,7 +50,7 @@
                         <!-- link de registro -->
                         <div class="register-section">
                             <p>¿No tienes cuenta?</p>
-                            <ion-button fill="outline" expland="block" @click="goToRegister">
+                            <ion-button fill="outline" expand="block" @click="goToRegister">
                                 Crear cuenta
                             </ion-button>
                         </div>
@@ -58,7 +58,7 @@
                 </ion-card>
 
                 <!-- footer con version ?? -->
-                <div clas="footer">
+                <div class="footer">
                 <p><small>v1.0.0 - Out Of Stock</small></p>
                 </div>
             </div>
@@ -149,7 +149,7 @@
             errorMessage.value = 'Error al iniciar sesión. Por favor intenta de nuevo.';
             await showToast(errorMessage.value, 'danger');
         }finally{
-            isLoading
+            isLoading.value = false;
         }
     }
         // navega a la pagina de recuperacion de constraseña
@@ -239,7 +239,7 @@
     --background: var(--ion-color-light);
     --border-radius: 8px;
     --padding-start: 16px;
-    --paffing-end: 16px;
+    --padding-end: 16px;
 }
 
 /* mensaje error */

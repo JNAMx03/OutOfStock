@@ -19,15 +19,15 @@
                         <ion-card-subtitle>{{ user?.name }}</ion-card-subtitle>
                     </ion-card-header>
                     <ion-card-content>
-                        <p><strong>Email:</strong>{{ user?.email }}</p>
-                        <p><strong>Rol:</strong>
+                        <p><strong>Email: </strong>{{ user?.email }}</p>
+                        <p><strong>Rol: </strong>
                             <ion-badge :color="getRoleColor(user?.role!)">
                                 {{ getRoleName(user?.role!) }}
                             </ion-badge>
                         </p>
 
                         <ion-button expand="block" class="ion-margin-top" disabled>
-                            <!-- en construccions -->
+                            en construccions
                         </ion-button>
 
                         <p class="info-text ion-margin-top">
@@ -71,6 +71,8 @@
     const authStore = useAuthStore();
 
     const user = computed(() => authStore.user);
+
+    console.log(user);
 
     async function handleLogout(){
         await authStore.logout();
