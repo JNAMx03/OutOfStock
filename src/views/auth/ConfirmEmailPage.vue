@@ -24,8 +24,7 @@
                     <ion-card-content>
 
                         <ion-item lines="none" class="input-item">
-                            <ion-label position="floating">Codigo de confirmación</ion-label>
-                            <ion-input type="text" v-model="confirmationCode" placeholder="123456" :maxlength='6' @keyup.enter="handleConfirm"></ion-input>
+                            <ion-input label="Codigo de confirmación" label-placement="floating" type="text" v-model="confirmationCode" placeholder="123456" :maxlength='6' @keyup.enter="handleConfirm"></ion-input>
                         </ion-item>
 
                         <!-- mensaje de error -->

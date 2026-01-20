@@ -13,15 +13,13 @@
                     <ion-card-content>
                         <h2 class="form-tittle">Iniciar Sesión</h2>
                         <!-- correo -->
-                        <ion-item lines="none" class="input.item">
-                            <ion-label position="floating">Email</ion-label>
-                            <ion-input type="email" v-model="email" placeholder="tu@email.com" @keyup.enter="handleLogin"></ion-input>
+                        <ion-item lines="none" class="input-item">
+                            <ion-input label="Email" label-placement="floating" type="email" v-model="email"  placeholder="tu@email.com" @keyup.enter="handleLogin"></ion-input>
                         </ion-item>
 
                         <!-- contraseña -->
                         <ion-item lines="none" class="input-item">
-                            <ion-label position="floating">Contraseña</ion-label>
-                            <ion-input type="password" v-model="password" placeholder="********" @keyup.enter="handleLogin"></ion-input>
+                            <ion-input label="Contraseña" label-placement="floating" type="password" v-model="password" placeholder="********" @keyup.enter="handleLogin"></ion-input>
                         </ion-item>
 
                         <!-- mostrar si existe un error -->
@@ -79,7 +77,6 @@
         IonCard,
         IonCardContent,
         IonItem,
-        IonLabel,
         IonInput,
         IonButton,
         IonText,
@@ -191,7 +188,6 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    align-items: center;
     min-height: 100%;
     padding: 20px;
 }
@@ -199,7 +195,7 @@
 /* logo o nombre */
 .logo-section {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 15px;
 }
 
 .app-icon {
@@ -267,7 +263,7 @@
     display: flex;
     align-items: center;
     text-align: center;
-    margin: 20px 0;
+    margin: 10px 0;
     color: var(--ion-color-medium);
 }
 
@@ -294,7 +290,7 @@
 
 /* footer */
 .footer{
-    margin-top: 30px;
+    margin-top: 10px;
     text-align: center;
     color: var(--ion-color-medium);
 }

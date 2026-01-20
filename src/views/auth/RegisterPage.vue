@@ -23,23 +23,19 @@
                 <ion-card class="register-card">
                     <ion-card-content>
                         <ion-item lines="none" class="input-item">
-                            <ion-label position="floating">Nombre completo *</ion-label>
-                            <ion-input type="text" v-model="name" placeholder="Peter Parker"></ion-input>
+                            <ion-input label="Nombre completo *" label-placement="floating" type="text" v-model="name" placeholder="Peter Parker"></ion-input>
                         </ion-item>
 
                         <ion-item lines="none" class="input-item">
-                            <ion-label position="floating">Correo electrónico *</ion-label>
-                            <ion-input type="email" v-model="email" placeholder="tu@rmail.com"></ion-input>
+                            <ion-input label="Correo electronico *" label-placement="floating" type="email" v-model="email" placeholder="tu@rmail.com"></ion-input>
                         </ion-item>
 
                         <ion-item lines="none" class="input-item">
-                            <ion-label position="floating">Contraseña *</ion-label>
-                            <ion-input type="password" v-model="password" placeholder="********"></ion-input>
+                            <ion-input label="Contraseña *" label-placement="floating" type="password" v-model="password" placeholder="********"></ion-input>
                         </ion-item>
 
                         <ion-item lines="none" class="input-item">
-                            <ion-label position="floating">Confirmar contraseña *</ion-label>
-                            <ion-input type="password" v-model="confirmPassword" placeholder="********" @keyup.enter="handleRegister"></ion-input>
+                            <ion-input label="Confirmar constraseña *" label-placement="floating" type="password" v-model="confirmPassword" placeholder="********" @keyup.enter="handleRegister"></ion-input>
                         </ion-item>
 
                         <div class="password-requirements" v-if="password">
@@ -118,7 +114,6 @@
         IonCard,
         IonCardContent,
         IonItem,
-        IonLabel,
         IonInput,
         IonButton,
         IonText,
@@ -381,7 +376,6 @@
 
     .login-section {
         text-align: center;
-        margin-top: 20px;
         padding-top: 20px;
         border-top: 1px solid var(--ion-color-light-shade);
     }

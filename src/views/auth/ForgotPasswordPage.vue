@@ -21,9 +21,8 @@
 
                 <ion-card class="forgot-card">
                     <ion-card-content>
-                        <ion-item lines="none" class="input.item">
-                            <ion-label position="floating">Email</ion-label>
-                            <ion-input type="email" v-model="email" placeholder="tu@email.com"></ion-input>
+                        <ion-item lines="none" class="input-item">
+                            <ion-input label="Email" label-placement="floating" type="email" v-model="email" placeholder="tu@email.com"></ion-input>
                         </ion-item>
 
                         <ion-button expand="block" @click="handleSendCode" :disabled="isLoading || !email" class="send-button">
@@ -61,7 +60,6 @@
         IonCard,
         IonCardContent,
         IonItem,
-        IonLabel,
         IonInput,
         IonButton,
         IonSpinner,
