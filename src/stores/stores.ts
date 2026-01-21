@@ -1,0 +1,281 @@
+// STORE DE TIENDAS - Maneja todas las tiendas del usuario
+
+// ============================================
+// IMPORTS
+// ============================================
+
+import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
+import type { Store, CreateStoreData, UpdateStoreData } from '@/models/Store';
+import { createDefaultInventorySettings } from '@/models/Store';
+
+// ============================================
+// STORE DE TIENDAS
+// ============================================
+
+export const useStoresStore = defineStore('stores', () => {
+    // ============================================
+    // ESTADO (State)
+    // ============================================
+    
+    // Lista de todas las tiendas del usuario
+    const stores = ref<Store[]>([]);
+    
+    // ID de la tienda actualmente seleccionada
+    const currentStoreId = ref<string | null>(null);
+    
+    // Estado de carga
+    const isLoading = ref(false);
+    
+    // ============================================
+    // GETTERS (Computed)
+    // ============================================
+    
+    /**
+     * Obtiene la tienda actual seleccionada
+     */
+    const currentStore = computed(() => {
+        if (!currentStoreId.value) return null;
+        return stores.value.find(store => store.id === currentStoreId.value) || null;
+    });
+    
+    /**
+     * Verifica si hay tiendas disponibles
+     */
+    const hasStores = computed(() => stores.value.length > 0);
+    
+    /**
+     * Obtiene el número total de tiendas
+     */
+    const storesCount = computed(() => stores.value.length);
+    
+    /**
+     * Obtiene solo las tiendas activas
+     */
+    const activeStores = computed(() => 
+        stores.value.filter(store => store.status === 'active')
+    );
+
+    // ============================================
+    // ACCIONES (Actions)
+    // ============================================
+    
+    /**
+     * 📋 FETCH STORES - Obtiene todas las tiendas del usuario
+     * TODO: En el futuro, esto obtendrá datos desde DynamoDB
+     */
+    async function fetchStores(userId: string) {
+        isLoading.value = true;
+        
+        try {
+        // TODO: Llamar a la API de AWS para obtener tiendas
+        // Por ahora, usamos datos de ejemplo
+        
+        // Simular delay de red
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Datos de ejemplo (solo para desarrollo)
+        const mockStores: Store[] = [
+            {
+            id: 'store-1',
+            name: 'Tienda Principal',
+            description: 'Mi primera tienda',
+            type: 'retail',
+            status: 'active',
+            address: {
+                street: 'Calle 123 #45-67',
+                city: 'Bogotá',
+                state: 'Cundinamarca',
+                country: 'Colombia',
+            },
+            phone: '+57 300 1234567',
+            email: 'tienda@ejemplo.com',
+            color: '#3880ff',
+            inventorySettings: createDefaultInventorySettings(),
+            ownerId: userId,
+            adminIds: [],
+            sellerIds: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            },
+        ];
+        
+        stores.value = mockStores;
+        
+        // Si hay tiendas y no hay una seleccionada, seleccionar la primera
+        if (stores.value.length > 0 && !currentStoreId.value) {
+            currentStoreId.value = stores.value[0].id;
+        }
+        
+        return { success: true };
+        } catch (error) {
+        console.error('Error al obtener tiendas:', error);
+        return { success: false, error: 'Error al cargar tiendas' };
+        } finally {
+        isLoading.value = false;
+        }
+    }
+    
+    /**
+     * ➕ CREATE STORE - Crea una nueva tienda
+     * TODO: Guardar en DynamoDB
+     */
+    async function createStore(data: CreateStoreData, userId: string) {
+        isLoading.value = true;
+        
+        try {
+        // TODO: Llamar a la API para crear tienda
+        
+        // Por ahora, crear localmente
+        const newStore: Store = {
+            id: `store-${Date.now()}`, // ID temporal
+            name: data.name,
+            description: data.description,
+            type: data.type,
+            status: 'active',
+            address: data.address,
+            phone: data.phone,
+            email: data.email,
+            logo: data.logo,
+            color: data.color || '#3880ff',
+            inventorySettings: {
+            ...createDefaultInventorySettings(),
+            ...data.inventorySettings,
+            },
+            ownerId: userId,
+            adminIds: [],
+            sellerIds: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        };
+        
+        stores.value.push(newStore);
+        
+        // Seleccionar la nueva tienda
+        currentStoreId.value = newStore.id;
+        
+        return { success: true, store: newStore };
+        } catch (error) {
+        console.error('Error al crear tienda:', error);
+        return { success: false, error: 'Error al crear tienda' };
+        } finally {
+        isLoading.value = false;
+        }
+    }
+    
+    /**
+     * ✏️ UPDATE STORE - Actualiza una tienda existente
+     * TODO: Actualizar en DynamoDB
+     */
+    async function updateStore(storeId: string, data: UpdateStoreData) {
+        isLoading.value = true;
+        
+        try {
+        const index = stores.value.findIndex(s => s.id === storeId);
+        
+        if (index === -1) {
+            throw new Error('Tienda no encontrada');
+        }
+        
+        // Actualizar localmente
+        stores.value[index] = {
+            ...stores.value[index],
+            ...data,
+            address: data.address 
+            ? { ...stores.value[index].address, ...data.address }
+            : stores.value[index].address,
+            inventorySettings: data.inventorySettings
+            ? { ...stores.value[index].inventorySettings, ...data.inventorySettings }
+            : stores.value[index].inventorySettings,
+            updatedAt: new Date().toISOString(),
+        };
+        
+        return { success: true, store: stores.value[index] };
+        } catch (error: any) {
+        console.error('Error al actualizar tienda:', error);
+        return { success: false, error: error.message || 'Error al actualizar tienda' };
+        } finally {
+        isLoading.value = false;
+        }
+    }
+    
+    /**
+     * 🗑️ DELETE STORE - Elimina una tienda
+     * TODO: Eliminar de DynamoDB (soft delete - cambiar estado a 'closed')
+     */
+    async function deleteStore(storeId: string) {
+        isLoading.value = true;
+        
+        try {
+        // En lugar de eliminar, marcar como cerrada (soft delete)
+        await updateStore(storeId, { status: 'closed' });
+        
+        // Si era la tienda actual, deseleccionar
+        if (currentStoreId.value === storeId) {
+            const activeStore = activeStores.value[0];
+            currentStoreId.value = activeStore?.id || null;
+        }
+        
+        return { success: true };
+        } catch (error: any) {
+        console.error('Error al eliminar tienda:', error);
+        return { success: false, error: error.message || 'Error al eliminar tienda' };
+        } finally {
+        isLoading.value = false;
+        }
+    }
+    
+    /**
+     * 🔄 SET CURRENT STORE - Cambia la tienda actual
+     */
+    function setCurrentStore(storeId: string) {
+        const store = stores.value.find(s => s.id === storeId);
+        
+        if (store) {
+        currentStoreId.value = storeId;
+        return { success: true };
+        }
+        
+        return { success: false, error: 'Tienda no encontrada' };
+    }
+    
+    /**
+     * 🔍 GET STORE BY ID - Obtiene una tienda específica por ID
+     */
+    function getStoreById(storeId: string): Store | null {
+        return stores.value.find(s => s.id === storeId) || null;
+    }
+    
+    /**
+     * 🧹 CLEAR - Limpia todos los datos (al hacer logout)
+     */
+    function clear() {
+        stores.value = [];
+        currentStoreId.value = null;
+    }
+
+    // ============================================
+    // RETORNAR
+    // ============================================
+    return {
+        // Estado
+        stores,
+        currentStoreId,
+        isLoading,
+        
+        // Getters
+        currentStore,
+        hasStores,
+        storesCount,
+        activeStores,
+        
+        // Acciones
+        fetchStores,
+        createStore,
+        updateStore,
+        deleteStore,
+        setCurrentStore,
+        getStoreById,
+        clear,
+    };
+});
