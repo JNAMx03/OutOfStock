@@ -50,12 +50,66 @@ const routes: Array<RouteRecordRaw> = [
   // RUTAS PROTEGIDAS (Requieren autenticación)
   // ==========================================
   {
+    path: '/tabs',
+    component: () => import('@/components/layout/TabsLayout.vue'),
+    meta: {requiresAuth: true},
+    children:[
+      {
+        path: '',
+        redirect: '/tabs/dashboard'
+      },
+      {
+        path: 'dashboard',
+        name: 'Dashboard',
+        component: () => import('@/views/tabs/DashboardTabPage.vue'),
+        meta:{
+          requiresAuth: true,
+          roles: ['owner', 'admin', 'seller'],
+        },
+      },
+      {
+        path: 'inventory',
+        name: 'Inventory',
+        component: () => import('@/views/tabs/InventoryTabPage.vue'),
+        meta: { 
+          requiresAuth: true,
+          roles: ['owner', 'admin', 'seller'],
+        },
+      },
+      {
+        path: 'sales',
+        name: 'Sales',
+        component: () => import('@/views/tabs/SalesTabPage.vue'),
+        meta: { 
+          requiresAuth: true,
+          roles: ['owner', 'admin', 'seller'],
+        },
+      },
+      {
+        path: 'financials',
+        name: 'Financials',
+        component: () => import('@/views/tabs/FinancialsTabPage.vue'),
+        meta: { 
+          requiresAuth: true,
+          roles: ['owner', 'admin'], // Solo Owner y Admin
+        },
+      },
+      {
+        path: 'more',
+        name: 'More',
+        component: () => import('@/views/tabs/MoreTabPage.vue'),
+        meta: { 
+          requiresAuth: true,
+          roles: ['owner', 'admin', 'seller'],
+        },
+      },
+    ],
+  },
+
+  // Ruta antigua de dashboard - redirige a tabs
+  {
     path: '/dashboard',
-    name: 'Dashboard',
-    component: () => import('@/views/DashboardPage.vue'),
-    meta: { requiresAuth: true, //requiere estar logueado
-      roles: ['owner', 'admin', 'seller'], //todos los roles pueden acceder
-    },
+    redirect: '/tabs/dashboard',
   },
 
   // ==========================================
