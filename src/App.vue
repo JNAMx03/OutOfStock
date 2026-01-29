@@ -4,11 +4,15 @@
     Todos los componentes de Ionic deben estar dentro de este
   -->
   <ion-app>
+    <!-- Side Menu - Menú lateral con información de la tienda -->
+    <side-menu></side-menu>
+
     <!-- 
       IonRouterOutlet: Donde se renderizan las páginas
       Es como un "contenedor" que muestra la página actual
+      id="main-content": Necesario para vincular con el menú lateral
     -->
-    <ion-router-outlet/>
+    <ion-router-outlet id="main-content"/>
   </ion-app>
 </template>
 
@@ -43,7 +47,7 @@
     console.log('app iniciada - verificando sesion...');
 
     try{
-      // intenta restairar la sesion desde aws cognito
+      // intenta restaurar la sesion desde aws cognito
       await authStore.checkSession();
 
       if( authStore.isAuthenticated){
@@ -71,6 +75,7 @@
 <style>
   :root{
     --app-background: #121212;
+    /* --app-background: #f8f9fa; */
   }
 
   /*fondo de la app*/
@@ -78,7 +83,7 @@
     --background: var(--app-background);
   }
 
-  /*scroll siave en toda la app*/
+  /*scroll suave en toda la app*/
   *{
     scroll-behavior: smooth
   }
