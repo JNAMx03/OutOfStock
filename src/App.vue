@@ -24,6 +24,7 @@
   import { IonApp, IonRouterOutlet } from '@ionic/vue';
   import { onMounted } from 'vue';
   import { useAuthStore } from '@/stores/auth';
+  import SideMenu from '@/components/layout/SideMenu.vue';
 
   // ============================================
   // SETUP
