@@ -76,6 +76,7 @@ export const useAuthStore = defineStore('auth', () => {
 
             //obtiene los atributos del usuario desde cognito
             const currentUser = await getCurrentUser();
+            console.log(currentUser)
 
             // TODO: En el futuro, obtendremos el rol y tiendas desde la base de datos
             // Por ahora, asignamos valores por defecto

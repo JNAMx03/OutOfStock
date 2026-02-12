@@ -16,7 +16,7 @@
             <div v-if="currentStore" class="store-info">
                 <!-- logo de la tienda -->
                 <div class="store-logo-container">
-                    <div v-if="currentStore.logo" class="store-logo" :style="{ backgroundImage: 'url(${currentStore.logo})'}"></div>"
+                    <div v-if="currentStore.logo" class="store-logo" :style="{ backgroundImage: 'url(${currentStore.logo})'}"></div>
                     <div v.else class="store-logo-placeholder" :style="{ background: currentStore.color || '#38880ff'}">
                         <ion-icon :icon="storefrontOutline"></ion-icon>
                     </div>
@@ -29,7 +29,7 @@
                         {{  getStoreStatusName(currentStore.status) }}
                     </ion-badge>
                     <p class="store-type">
-                        <ion-icon :icon="getStoreTypeIconName(currentStore.type)"></ion-icon>
+                        <!-- <ion-icon :icon="getStoreTypeIconName(currentStore.type)"></ion-icon> -->
                         {{  getStoreTypeName(currentStore.type) }}
                     </p>
                 </div>

@@ -27,11 +27,11 @@
             <!-- saludo personalizado -->
             <div class="welcome-section">
                 <h1>¡Hola, {{  userName  }}! 👋</h1>
-                <p class="subtitle">{{  getGreeting }}</p>
+                <p class="subtitle">{{  getGreeting() }}</p>
             </div>
 
             <!-- Selector de tienda (si tiene múltiples) -->
-            <ion-card v-if="hasMultipleStores" class="store-señector-card">
+            <ion-card v-if="hasMultipleStores" class="store-selector-card">
                 <ion-card-content>
                     <ion-item lines="none">
                         <ion-label>Tienda actual: </ion-label>
@@ -52,7 +52,7 @@
                             <ion-icon :icon="cubeOutline" color="primary"></ion-icon>
                         </div>
                         <h3>Productos</h3>
-                        <p class="kpi.value">0</p>
+                        <p class="kpi-value">0</p>
                         <p class="kpi-label">en inventario</p>
                     </ion-card-content>
                 </ion-card>
@@ -60,7 +60,7 @@
                 <ion-card class="kpi-card">
                     <ion-card-content>
                         <div class="kpi-icon" style="background: #10dc6015;">
-                            <icon-icon :icon="cartOutline" color="success"></icon-icon>
+                            <ion-icon :icon="cartOutline" color="success"></ion-icon>
                         </div>
                         <h3>Ventas hoy</h3>
                         <p class="kpi-value">0</p>
@@ -167,6 +167,7 @@
     const selectedStoreId = ref<string | null>(null);
 
     // Computed
+    console.log(authStore.user);
     const userName = computed(() => authStore.user?.name || 'Usuario');
     const storeName = computed(() => storesStore.currentStore?.name || 'Mi Tienda');
     const stores = computed(() => storesStore.stores);
