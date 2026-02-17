@@ -167,7 +167,6 @@
     const selectedStoreId = ref<string | null>(null);
 
     // Computed
-    console.log(authStore.user);
     const userName = computed(() => authStore.user?.name || 'Usuario');
     const storeName = computed(() => storesStore.currentStore?.name || 'Mi Tienda');
     const stores = computed(() => storesStore.stores);

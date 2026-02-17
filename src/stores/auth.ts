@@ -1,7 +1,7 @@
 import {defineStore} from 'pinia';
 import {ref, computed} from 'vue';
 //import {Auth} from 'aws-amplify';
-import { signIn, signOut, signUp, confirmSignUp, resendSignUpCode, getCurrentUser, fetchAuthSession } from 'aws-amplify/auth';
+import { signIn, signOut, signUp, confirmSignUp, resendSignUpCode, getCurrentUser, fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth';
 
 //INTERFACES
 
@@ -76,14 +76,14 @@ export const useAuthStore = defineStore('auth', () => {
 
             //obtiene los atributos del usuario desde cognito
             const currentUser = await getCurrentUser();
-            console.log(currentUser)
+            const userAttributes = await fetchUserAttributes();
 
             // TODO: En el futuro, obtendremos el rol y tiendas desde la base de datos
             // Por ahora, asignamos valores por defecto
             user.value ={
                 id: currentUser.username,
                 email: email,
-                name: currentUser.username || 'Usuario',
+                name: userAttributes.name || currentUser.username || 'Usuario',
                 role: 'owner', //por defecto, el primer usuario es dueño
                 storeIds: [],
                 currentStoreId: null,
@@ -245,14 +245,15 @@ export const useAuthStore = defineStore('auth', () => {
             //intenta obtener el usuario actual de AWS Cognito
             const currentUser = await getCurrentUser();
             const session = await fetchAuthSession();
+            const userAttributes = await fetchUserAttributes();
             authToken.value = session.tokens?.accessToken?.toString() || null;
 
             //restaura los datos del usuario
             //TODO: obtener datos completos de desde la base de datos
             user.value ={
                 id: currentUser.username,
-                email: currentUser.signInDetails?.loginId || '',
-                name: currentUser.signInDetails?.loginId || 'Usuario',
+                email: userAttributes.email || currentUser.signInDetails?.loginId || '',
+                name: userAttributes.name || currentUser.signInDetails?.loginId || 'Usuario',
                 role: 'owner', //por defecto, el primer usuario es dueño
                 storeIds: [],
                 currentStoreId: null,
