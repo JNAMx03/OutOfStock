@@ -1,0 +1,10 @@
+{
+  "resourceName": "OutOfStockDB",
+  "tableName": "Stores",
+  "partitionKey": {
+    "fieldName": "id",
+    "fieldType": "string"
+  },
+  "gsi": [],
+  "triggerFunctions": []
+}
