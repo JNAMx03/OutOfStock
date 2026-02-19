@@ -7,7 +7,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Store, CreateStoreData, UpdateStoreData } from '@/models/Store';
-import { createDefaultInventorySettings } from '@/models/Store';
+import * as storesService from '@/services/stores.services';
 
 // ============================================
 // STORE DE TIENDAS
@@ -68,51 +68,22 @@ export const useStoresStore = defineStore('stores', () => {
         isLoading.value = true;
         
         try {
-        // TODO: Llamar a la API de AWS para obtener tiendas
-        // Por ahora, usamos datos de ejemplo
-        
-        // Simular delay de red
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Datos de ejemplo (solo para desarrollo)
-        const mockStores: Store[] = [
-            {
-            id: 'store-1',
-            name: 'Tienda Principal',
-            description: 'Mi primera tienda',
-            type: 'retail',
-            status: 'active',
-            address: {
-                street: 'Calle 123 #45-67',
-                city: 'Bogotá',
-                state: 'Cundinamarca',
-                country: 'Colombia',
-            },
-            phone: '+57 300 1234567',
-            email: 'tienda@ejemplo.com',
-            color: '#3880ff',
-            inventorySettings: createDefaultInventorySettings(),
-            ownerId: userId,
-            adminIds: [],
-            sellerIds: [],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            },
-        ];
-        
-        stores.value = mockStores;
-        
-        // Si hay tiendas y no hay una seleccionada, seleccionar la primera
-        if (stores.value.length > 0 && !currentStoreId.value) {
-            currentStoreId.value = stores.value[0].id;
-        }
-        
-        return { success: true };
+            // Obtener tiendas desde el servicio (API)
+            const fetchedStores = await storesService.getAllStores(userId);
+            
+            stores.value = fetchedStores;
+            
+            // Si hay tiendas y no hay una seleccionada, seleccionar la primera
+            if (stores.value.length > 0 && !currentStoreId.value) {
+                currentStoreId.value = stores.value[0].id;
+            }
+            
+            return { success: true };
         } catch (error) {
-        console.error('Error al obtener tiendas:', error);
-        return { success: false, error: 'Error al cargar tiendas' };
+            console.error('Error al obtener tiendas:', error);
+            return { success: false, error: 'Error al cargar tiendas' };
         } finally {
-        isLoading.value = false;
+            isLoading.value = false;
         }
     }
     
@@ -124,42 +95,21 @@ export const useStoresStore = defineStore('stores', () => {
         isLoading.value = true;
         
         try {
-        // TODO: Llamar a la API para crear tienda
-        
-        // Por ahora, crear localmente
-        const newStore: Store = {
-            id: `store-${Date.now()}`, // ID temporal
-            name: data.name,
-            description: data.description,
-            type: data.type,
-            status: 'active',
-            address: data.address,
-            phone: data.phone,
-            email: data.email,
-            logo: data.logo,
-            color: data.color || '#3880ff',
-            inventorySettings: {
-            ...createDefaultInventorySettings(),
-            ...data.inventorySettings,
-            },
-            ownerId: userId,
-            adminIds: [],
-            sellerIds: [],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        };
-        
-        stores.value.push(newStore);
-        
-        // Seleccionar la nueva tienda
-        currentStoreId.value = newStore.id;
-        
-        return { success: true, store: newStore };
+            // Crear tienda usando el servicio
+            const newStore = await storesService.createStore(data, userId);
+            
+            // Agregar a la lista local
+            stores.value.push(newStore);
+            
+            // Seleccionar la nueva tienda
+            currentStoreId.value = newStore.id;
+            
+            return { success: true, store: newStore };
         } catch (error) {
-        console.error('Error al crear tienda:', error);
-        return { success: false, error: 'Error al crear tienda' };
+            console.error('Error al crear tienda:', error);
+            return { success: false, error: 'Error al crear tienda' };
         } finally {
-        isLoading.value = false;
+            isLoading.value = false;
         }
     }
     
@@ -171,31 +121,22 @@ export const useStoresStore = defineStore('stores', () => {
         isLoading.value = true;
         
         try {
-        const index = stores.value.findIndex(s => s.id === storeId);
-        
-        if (index === -1) {
-            throw new Error('Tienda no encontrada');
-        }
-        
-        // Actualizar localmente
-        stores.value[index] = {
-            ...stores.value[index],
-            ...data,
-            address: data.address 
-            ? { ...stores.value[index].address, ...data.address }
-            : stores.value[index].address,
-            inventorySettings: data.inventorySettings
-            ? { ...stores.value[index].inventorySettings, ...data.inventorySettings }
-            : stores.value[index].inventorySettings,
-            updatedAt: new Date().toISOString(),
-        };
-        
-        return { success: true, store: stores.value[index] };
+            // Actualizar usando el servicio
+            const updatedStore = await storesService.updateStore(storeId, data);
+            
+            // Actualizar en la lista local
+            const index = stores.value.findIndex(s => s.id === storeId);
+            
+            if (index !== -1) {
+                stores.value[index] = updatedStore;
+            }
+            
+            return { success: true, store: updatedStore };
         } catch (error: any) {
-        console.error('Error al actualizar tienda:', error);
-        return { success: false, error: error.message || 'Error al actualizar tienda' };
+            console.error('Error al actualizar tienda:', error);
+            return { success: false, error: error.message || 'Error al actualizar tienda' };
         } finally {
-        isLoading.value = false;
+            isLoading.value = false;
         }
     }
     
@@ -207,21 +148,27 @@ export const useStoresStore = defineStore('stores', () => {
         isLoading.value = true;
         
         try {
-        // En lugar de eliminar, marcar como cerrada (soft delete)
-        await updateStore(storeId, { status: 'closed' });
-        
-        // Si era la tienda actual, deseleccionar
-        if (currentStoreId.value === storeId) {
-            const activeStore = activeStores.value[0];
-            currentStoreId.value = activeStore?.id || null;
-        }
-        
-        return { success: true };
+        // Eliminar usando el servicio (soft delete - cambia estado a 'closed')
+            await storesService.deleteStore(storeId);
+            
+            // Actualizar estado local
+            const index = stores.value.findIndex(s => s.id === storeId);
+            if (index !== -1) {
+                stores.value[index].status = 'closed';
+            }
+            
+            // Si era la tienda actual, deseleccionar
+            if (currentStoreId.value === storeId) {
+                const activeStore = activeStores.value[0];
+                currentStoreId.value = activeStore?.id || null;
+            }
+            
+            return { success: true };
         } catch (error: any) {
-        console.error('Error al eliminar tienda:', error);
-        return { success: false, error: error.message || 'Error al eliminar tienda' };
+            console.error('Error al eliminar tienda:', error);
+            return { success: false, error: error.message || 'Error al eliminar tienda' };
         } finally {
-        isLoading.value = false;
+            isLoading.value = false;
         }
     }
     
