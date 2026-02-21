@@ -114,6 +114,7 @@
         IonIcon,
         IonBadge,
         IonSpinner,
+        modalController,
         alertController,
         toastController,
     } from '@ionic/vue';
@@ -137,6 +138,9 @@
         getStoreStatusName,
         type Store,
     } from '@/models/Store';
+
+    // Importamos el componente del modal
+    import StoreFormModal from '@/components/stores/StoreFormModal.vue';
 
     // ============================================
     // COMPOSABLES
@@ -199,27 +203,38 @@
      * Abre el modal para crear una nueva tienda
      */
     async function openCreateStoreModal() {
-        // TODO: Implementar modal de formulario
-        // Por ahora, mostramos un alert
-        const alert = await alertController.create({
-            header: 'Crear Tienda',
-            message: 'El formulario se implementará en el siguiente paso',
-            buttons: ['OK'],
+        const modal = await modalController.create({
+            component: StoreFormModal,
+            // No pasamos prop store, así entra en modo "crear"
         });
-        await alert.present();
+        
+        await modal.present();
+        
+        // Cuando se cierra el modal, recargar tiendas
+        //const { data } = await modal.onWillDismiss();
+        if (authStore.user) {
+            await storesStore.fetchStores(authStore.user.id);
+        }
     }
 
     /**
      * Abre el modal para editar una tienda
      */
     async function editStore(store: Store) {
-        // TODO: Implementar modal de formulario
-        const alert = await alertController.create({
-            header: 'Editar Tienda',
-            message: `Editando: ${store.name}. El formulario se implementará en el siguiente paso.`,
-            buttons: ['OK'],
+        const modal = await modalController.create({
+            component: StoreFormModal,
+            componentProps: {
+            store, // Pasamos la tienda para editar
+            },
         });
-        await alert.present();
+        
+        await modal.present();
+        
+        // Cuando se cierra el modal, recargar tiendas
+        //const { data } = await modal.onWillDismiss();
+        if (authStore.user) {
+            await storesStore.fetchStores(authStore.user.id);
+        }
     }
 
     /**
