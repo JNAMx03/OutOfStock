@@ -113,6 +113,19 @@ const routes: Array<RouteRecordRaw> = [
   },
 
   // ==========================================
+  // RUTAS DE GESTIÓN (Requieren roles específicos)
+  // ==========================================
+  {
+    path: '/stores-management',
+    name: 'StoresManagement',
+    component: () => import('@/views/management/StoresManagementPage.vue'),
+    meta: {
+      requiresAuth: true,
+      roles: ['owner'], // Solo el dueño puede gestionar tiendas
+    },
+  },
+
+  // ==========================================
   // RUTA 404 (Página no encontrada)
   // ==========================================
   {
