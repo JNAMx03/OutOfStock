@@ -235,6 +235,11 @@
         if (authStore.user) {
             await storesStore.fetchStores(authStore.user.id);
         }
+
+        // // Cuando se cierra el modal, NO es necesario recargar
+        // // porque el store ya tiene los datos actualizados
+        // // esto se activa y se comenta el IF de arriba
+        // await modal.onWillDismiss();
     }
 
     /**

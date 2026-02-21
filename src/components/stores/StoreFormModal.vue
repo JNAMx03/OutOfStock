@@ -33,7 +33,7 @@
                     <!-- tipo de tienda -->
                     <ion-item>
                         <ion-select label="Tipo de tienda" label-placement="floating" v-model="formData.type" placeholder="Selecciona un tipo" interface="action-sheet">
-                            <ion-select-option value="reatil">Minarista</ion-select-option>
+                            <ion-select-option value="retail">Minorista</ion-select-option>
                             <ion-select-option value="wholesale">Mayorista</ion-select-option>
                             <ion-select-option value="restaurant">Restaurante</ion-select-option>
                             <ion-select-option value="bar">Bar</ion-select-option>
@@ -283,6 +283,17 @@
     async function handleSubmit(){
         //limpiar errores previos
         errorMessage.value = '';
+
+        // Asegurar que el tipo esté definido (por defecto 'retail')
+        if (!formData.value.type) {
+            formData.value.type = 'retail';
+        }
+        
+        console.log('📝 Datos del formulario antes de validar:', {
+            name: formData.value.name,
+            type: formData.value.type,
+            address: formData.value.address,
+        });
 
         //validar datos del formulario
         const validation = validateStoreData(formData.value);

@@ -64,13 +64,28 @@ export const useStoresStore = defineStore('stores', () => {
      * 📋 FETCH STORES - Obtiene todas las tiendas del usuario
      * TODO: En el futuro, esto obtendrá datos desde DynamoDB
      */
-    async function fetchStores(userId: string) {
+    async function fetchStores(userId: string, forceRefresh: boolean = false) {
+        // Si ya hay tiendas cargadas y no es un refresh forzado, no hacer nada
+        if (stores.value.length > 0 && !forceRefresh) {
+            console.log('✅ Tiendas ya cargadas, usando caché local');
+            return { success: true };
+        }
+        
         isLoading.value = true;
         
         try {
             // Obtener tiendas desde el servicio (API)
-            const fetchedStores = await storesService.getAllStores(userId);
+            // Por ahora retorna mock, pero solo si NO hay tiendas creadas
+            console.log('📦 Obteniendo tiendas desde el servicio...');
             
+            // Si ya hay tiendas en el store, mantenerlas
+            if (stores.value.length > 0) {
+                console.log('✅ Usando tiendas del store local');
+                return { success: true };
+            }
+            
+            // Solo cargar mock si no hay tiendas
+            const fetchedStores = await storesService.getAllStores(userId);
             stores.value = fetchedStores;
             
             // Si hay tiendas y no hay una seleccionada, seleccionar la primera
@@ -80,10 +95,10 @@ export const useStoresStore = defineStore('stores', () => {
             
             return { success: true };
         } catch (error) {
-            console.error('Error al obtener tiendas:', error);
-            return { success: false, error: 'Error al cargar tiendas' };
+        console.error('Error al obtener tiendas:', error);
+        return { success: false, error: 'Error al cargar tiendas' };
         } finally {
-            isLoading.value = false;
+        isLoading.value = false;
         }
     }
     
@@ -121,22 +136,51 @@ export const useStoresStore = defineStore('stores', () => {
         isLoading.value = true;
         
         try {
-            // Actualizar usando el servicio
-            const updatedStore = await storesService.updateStore(storeId, data);
-            
-            // Actualizar en la lista local
+            // Encontrar la tienda original
             const index = stores.value.findIndex(s => s.id === storeId);
             
-            if (index !== -1) {
-                stores.value[index] = updatedStore;
+            if (index === -1) {
+                console.error('❌ Tienda no encontrada. ID buscado:', storeId);
+                console.error('Tiendas disponibles:', stores.value.map(s => ({ id: s.id, name: s.name })));
+                throw new Error('Tienda no encontrada');
             }
             
+            const originalStore = stores.value[index];
+            console.log('📝 Actualizando tienda:', originalStore.name);
+            
+            // Fusionar los datos nuevos con los originales
+            // Esto preserva todos los campos que no se están actualizando
+            const updatedStore: Store = {
+                ...originalStore,
+                ...data,
+                // Fusionar address si existe
+                address: data.address 
+                ? { ...originalStore.address, ...data.address }
+                : originalStore.address,
+                // Fusionar inventorySettings si existe
+                inventorySettings: data.inventorySettings
+                ? { ...originalStore.inventorySettings, ...data.inventorySettings }
+                : originalStore.inventorySettings,
+                // Actualizar timestamp
+                updatedAt: new Date().toISOString(),
+            };
+            
+            // TODO: Actualizar en DynamoDB cuando implementemos AppSync
+            // await storesService.updateStore(storeId, data);
+            
+            // Simular delay de red
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Actualizar en la lista local
+            stores.value[index] = updatedStore;
+            
+            console.log('✅ Tienda actualizada exitosamente:', updatedStore.name);
             return { success: true, store: updatedStore };
         } catch (error: any) {
-            console.error('Error al actualizar tienda:', error);
-            return { success: false, error: error.message || 'Error al actualizar tienda' };
+        console.error('❌ Error al actualizar tienda:', error);
+        return { success: false, error: error.message || 'Error al actualizar tienda' };
         } finally {
-            isLoading.value = false;
+        isLoading.value = false;
         }
     }
     
