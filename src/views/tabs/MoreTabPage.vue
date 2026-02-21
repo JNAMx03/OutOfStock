@@ -29,7 +29,7 @@
                     <ion-label>Gestión</ion-label>
                 </ion-list-header>
 
-                <ion-item button v-if="isOwner">
+                <ion-item button @click="goToStoresManagement" v-if="isOwner">
                     <ion-icon :icon="storefrontOutline" slot="start"></ion-icon>
                     <ion-label>Mis Tiendas</ion-label>
                 </ion-item>
@@ -103,6 +103,10 @@
     const isOwner = computed(() => authStore.isOwner);
     const isAdmin = computed(() => authStore.isAdmin);
     const canViewFinancials = computed(() => authStore.isOwner || authStore.isAdmin);
+
+    function goToStoresManagement() {
+        router.push('/stores-management');
+    }
 
     async function handleLogout() {
         await authStore.logout();
