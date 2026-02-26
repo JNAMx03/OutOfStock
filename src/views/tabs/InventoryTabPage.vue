@@ -18,7 +18,12 @@
 
             <!-- barra de busqueda -->
             <ion-toolbar>
-                <ion-searchbar v-model="searchQuery" placeholder="Buscar por nombre, SKU o codigo de barras" @ionInput="handleSearch" :debounce="300"></ion-searchbar>
+                <ion-searchbar 
+                    v-model="searchQuery" 
+                    placeholder="Buscar por nombre, SKU o codigo de barras" 
+                    @ionInput="handleSearch" 
+                    :debounce="300"
+                ></ion-searchbar>
             </ion-toolbar>
         </ion-header>
 
@@ -48,7 +53,12 @@
 
             <!-- Lista de productos -->
             <div v-else-if="filteredProducts.length > 0" class="products-list ion-padding">
-                <ion-card v-for="product in filteredProducts" :key="product.id" class="product-card" button @click="viewProduct(product)">
+                <ion-card 
+                    v-for="product in filteredProducts" 
+                    :key="product.id" 
+                    class="product-card" 
+                    button 
+                    @click="viewProduct(product)">
                     <ion-card-content>
                         <div class="product-header">
                             <!-- Imagen o placeholder -->
@@ -142,6 +152,7 @@
         IonSpinner,
         alertController,
         toastController,
+        modalController,
     } from '@ionic/vue';
     import { 
         cubeOutline,
@@ -164,6 +175,8 @@
         isOutOfStock,
         type Product,
     } from '@/models/Product';
+
+    import ProductFormModal from '@/components/products/ProductFormModal.vue';
     
     // const router = useRouter();
     // const authStore = useAuthStore();
@@ -205,19 +218,28 @@
         return 'success';
     }
 
-    function addProduct() {
-        // TODO: Abrir modal de crear producto
-        console.log('Agregar producto');
+    async function addProduct() {
+        const modal = await modalController.create({
+            component: ProductFormModal,
+        });
+        
+        await modal.present();
     }
 
-    function viewProduct(product: Product) {
-        // TODO: Ver detalles del producto
-        console.log('Ver producto:', product.name);
+    async function viewProduct(product: Product) {
+        // Por ahora, abrir el modal de edición
+        await editProduct(product);
     }
 
-    function editProduct(product: Product) {
-        // TODO: Editar producto
-        console.log('Editar producto:', product.name);
+    async function editProduct(product: Product) {
+        const modal = await modalController.create({
+            component: ProductFormModal,
+            componentProps: {
+            product,
+            },
+        });
+        
+        await modal.present();
     }
 
     async function confirmDeleteProduct(product: Product) {
