@@ -59,32 +59,32 @@ export const useProductsStore = defineStore('products', () => {
     );
 
     /**
-   * Obtiene productos con stock bajo
-   */
-  const lowStockProducts = computed(() => 
-    products.value.filter(p => hasLowStock(p) && !isOutOfStock(p))
-  );
-  
-  /**
-   * Obtiene productos sin stock
-   */
-  const outOfStockProducts = computed(() => 
-    products.value.filter(p => isOutOfStock(p))
-  );
-  
-  /**
-   * Cuenta total de productos
-   */
-  const totalProducts = computed(() => products.value.length);
-  
-  /**
-   * Valor total del inventario (costo)
-   */
-  const totalInventoryValue = computed(() => {
-    return products.value.reduce((total, p) => {
-      return total + (p.purchasePrice * p.stock);
-    }, 0);
-  });
+     * Obtiene productos con stock bajo
+     */
+    const lowStockProducts = computed(() => 
+        products.value.filter(p => hasLowStock(p) && !isOutOfStock(p))
+    );
+    
+    /**
+     * Obtiene productos sin stock
+     */
+    const outOfStockProducts = computed(() => 
+        products.value.filter(p => isOutOfStock(p))
+    );
+    
+    /**
+     * Cuenta total de productos
+     */
+    const totalProducts = computed(() => products.value.length);
+    
+    /**
+     * Valor total del inventario (costo)
+     */
+    const totalInventoryValue = computed(() => {
+        return products.value.reduce((total, p) => {
+        return total + (p.purchasePrice * p.stock);
+        }, 0);
+    });
   
     /**
      * Productos filtrados según filtros activos

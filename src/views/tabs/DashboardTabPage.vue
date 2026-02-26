@@ -52,7 +52,7 @@
                             <ion-icon :icon="cubeOutline" color="primary"></ion-icon>
                         </div>
                         <h3>Productos</h3>
-                        <p class="kpi-value">0</p>
+                        <p class="kpi-value">{{ totalProducts }}</p>
                         <p class="kpi-label">en inventario</p>
                     </ion-card-content>
                 </ion-card>
@@ -73,9 +73,9 @@
                         <div class="kpi-icon" style="background: #ffc40915;">
                         <ion-icon :icon="cashOutline" color="warning"></ion-icon>
                         </div>
-                        <h3>Ingresos Hoy</h3>
-                        <p class="kpi-value">$0</p>
-                        <p class="kpi-label">total vendido</p>
+                        <h3>Valor Inventario</h3>
+                        <p class="kpi-value">${{ totalInventoryValue.toLocaleString('es-CO') }}</p>
+                        <p class="kpi-label">Costo total</p>
                     </ion-card-content>
                 </ion-card>
 
@@ -85,7 +85,7 @@
                         <ion-icon :icon="alertCircleOutline" color="danger"></ion-icon>
                         </div>
                         <h3>Stock Bajo</h3>
-                        <p class="kpi-value">0</p>
+                        <p class="kpi-value">{{ lowStockCount + outOfStockCount }}</p>
                         <p class="kpi-label">productos</p>
                     </ion-card-content>
                 </ion-card>
@@ -125,7 +125,7 @@
 */
 
 <script setup lang="ts">
-    import { ref, computed, onMounted } from 'vue';
+    import { ref, computed, onMounted, watch } from 'vue';
     import { useRouter } from 'vue-router';
     import {
         IonPage,
@@ -157,10 +157,12 @@
 
     import { useAuthStore } from '@/stores/auth';
     import { useStoresStore } from '@/stores/stores';
+    import { useProductsStore } from '@/stores/products';
 
     const router = useRouter();
     const authStore = useAuthStore();
     const storesStore = useStoresStore();
+    const productsStore = useProductsStore();
 
     // Estado
     const notificationsCount = ref(0); // TODO: Conectar con store de notificaciones
@@ -173,6 +175,11 @@
     const hasMultipleStores = computed(() => storesStore.storesCount > 1);
     const canViewFinancials = computed(() => authStore.isOwner || authStore.isAdmin);
 
+    const totalProducts = computed(() => productsStore.totalProducts);
+    const lowStockCount = computed(() => productsStore.lowStockProducts.length);
+    const outOfStockCount = computed(() => productsStore.outOfStockProducts.length);
+    const totalInventoryValue = computed(() => productsStore.totalInventoryValue);
+
     // Lifecycle
     onMounted(async () => {
         // Cargar tiendas si no están cargadas
@@ -182,6 +189,18 @@
         
         // Establecer tienda seleccionada
         selectedStoreId.value = storesStore.currentStoreId;
+
+        // Cargar productos de la tienda actual
+        if (storesStore.currentStoreId) {
+            await productsStore.fetchProducts(storesStore.currentStoreId);
+        }
+    });
+
+    // Watch para recargar productos si cambia la tienda
+    watch(() => storesStore.currentStoreId, async (newStoreId) => {
+    if (newStoreId) {
+        await productsStore.fetchProducts(newStoreId);
+    }
     });
 
     // Funciones
@@ -203,7 +222,9 @@
     }
 
     function goToAddProduct() {
-        router.push('/tabs/inventory/add');
+        router.push('/tabs/inventory');
+        // Después de navegar, abrir el modal automáticamente sería ideal
+        // pero por simplicidad, el usuario hará clic en el botón +
     }
 
     function goToNewSale() {

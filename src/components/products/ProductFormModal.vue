@@ -147,7 +147,6 @@
                     <!-- Stock inicial y unidad en una fila -->
                     <div class="row-fields">
                         <ion-item class="flex-item">
-                            <ion-label position="floating">Stock Inicial *</ion-label>
                             <ion-input
                                 label="Stock Inicial"
                                 label-placement="floating"
@@ -251,7 +250,6 @@
         IonContent,
         IonFooter,
         IonItem,
-        IonLabel,
         IonInput,
         IonTextarea,
         IonSelect,
