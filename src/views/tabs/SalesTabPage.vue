@@ -174,6 +174,7 @@
     IonIcon,
     IonBadge,
     IonSpinner,
+    modalController,
   } from '@ionic/vue';
   import {
     cartOutline,
@@ -196,6 +197,8 @@
     getSaleStatusName,
     type Sale,
   } from '@/models/Sale';
+
+  import NewSaleModal from '@/components/sales/NewSaleModal.vue';
 
   // const router = useRouter();
   const authStore = useAuthStore();
@@ -257,9 +260,12 @@
     }
   }
 
-  function openNewSale() {
-    // TODO: Abrir modal de nueva venta
-    console.log('Nueva venta');
+  async function openNewSale() {
+      const modal = await modalController.create({
+      component: NewSaleModal,
+    });
+    
+    await modal.present();
   }
 
   function viewSale(sale: Sale) {
