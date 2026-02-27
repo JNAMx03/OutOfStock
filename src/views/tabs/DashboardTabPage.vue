@@ -63,7 +63,7 @@
                             <ion-icon :icon="cartOutline" color="success"></ion-icon>
                         </div>
                         <h3>Ventas hoy</h3>
-                        <p class="kpi-value">0</p>
+                        <p class="kpi-value">{{ todaySalesCount }}</p>
                         <p class="kpi-label">total vendido</p>
                     </ion-card-content>
                 </ion-card>
@@ -73,9 +73,9 @@
                         <div class="kpi-icon" style="background: #ffc40915;">
                         <ion-icon :icon="cashOutline" color="warning"></ion-icon>
                         </div>
-                        <h3>Valor Inventario</h3>
-                        <p class="kpi-value">${{ totalInventoryValue.toLocaleString('es-CO') }}</p>
-                        <p class="kpi-label">Costo total</p>
+                        <h3>Ingresos </h3>
+                        <p class="kpi-value">${{ todaySalesTotal.toLocaleString('es-CO') }}</p>
+                        <p class="kpi-label">total vendido</p>
                     </ion-card-content>
                 </ion-card>
 
@@ -158,11 +158,13 @@
     import { useAuthStore } from '@/stores/auth';
     import { useStoresStore } from '@/stores/stores';
     import { useProductsStore } from '@/stores/products';
+    import { useSalesStore } from '@/stores/sales';
 
     const router = useRouter();
     const authStore = useAuthStore();
     const storesStore = useStoresStore();
     const productsStore = useProductsStore();
+    const salesStore = useSalesStore();
 
     // Estado
     const notificationsCount = ref(0); // TODO: Conectar con store de notificaciones
@@ -175,10 +177,18 @@
     const hasMultipleStores = computed(() => storesStore.storesCount > 1);
     const canViewFinancials = computed(() => authStore.isOwner || authStore.isAdmin);
 
+    //stats de inventario
     const totalProducts = computed(() => productsStore.totalProducts);
     const lowStockCount = computed(() => productsStore.lowStockProducts.length);
     const outOfStockCount = computed(() => productsStore.outOfStockProducts.length);
-    const totalInventoryValue = computed(() => productsStore.totalInventoryValue);
+    // const totalInventoryValue = computed(() => productsStore.totalInventoryValue);
+
+    //stats de ventas
+    const todaySalesTotal = computed(() => salesStore.todaySalesTotal);
+    const todaySalesCount = computed(() => {
+        const today = new Date().toDateString();
+        return salesStore.sales.filter(s=> new Date(s.createdAt).toDateString() === today).length;
+    });
 
     // Lifecycle
     onMounted(async () => {
