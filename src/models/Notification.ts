@@ -16,13 +16,13 @@
  * - system:          Mensaje general del sistema
  */
 export type NotificationType =
-  | 'low_stock'
-  | 'out_of_stock'
-  | 'debt_reminder'
-  | 'debt_overdue'
-  | 'invitation'
-  | 'sale_completed'
-  | 'system';
+    | 'low_stock'
+    | 'out_of_stock'
+    | 'debt_reminder'
+    | 'debt_overdue'
+    | 'invitation'
+    | 'sale_completed'
+    | 'system';
 
 /**
  * Prioridad de la notificación (afecta el color e icono visual)
@@ -50,27 +50,27 @@ export type NotificationStatus = 'unread' | 'read' | 'dismissed';
  * Estructura completa de una Notificación
  */
 export interface Notification {
-  id: string;                    // ID único de la notificación
-  type: NotificationType;        // Tipo de alerta
-  priority: NotificationPriority; // Nivel de urgencia
-  status: NotificationStatus;    // ¿Ya fue leída?
+    id: string;                    // ID único de la notificación
+    type: NotificationType;        // Tipo de alerta
+    priority: NotificationPriority; // Nivel de urgencia
+    status: NotificationStatus;    // ¿Ya fue leída?
 
-  // Contenido visible
-  title: string;                 // Título corto (ej: "Stock bajo")
-  message: string;               // Descripción detallada
-  icon: string;                  // Nombre del ícono de Ionic
+    // Contenido visible
+    title: string;                 // Título corto (ej: "Stock bajo")
+    message: string;               // Descripción detallada
+    icon: string;                  // Nombre del ícono de Ionic
 
-  // Referencia al elemento relacionado (para navegar al hacer clic)
-  relatedId?: string;            // ID del producto, cliente o venta
-  relatedType?: 'product' | 'sale' | 'client' | 'store'; // Qué tipo de dato
+    // Referencia al elemento relacionado (para navegar al hacer clic)
+    relatedId?: string;            // ID del producto, cliente o venta
+    relatedType?: 'product' | 'sale' | 'client' | 'store'; // Qué tipo de dato
 
-  // Tienda a la que pertenece esta notificación
-  storeId: string;
-  storeName?: string;
+    // Tienda a la que pertenece esta notificación
+    storeId: string;
+    storeName?: string;
 
-  // Metadatos
-  createdAt: string;             // Fecha de creación (ISO string)
-  readAt?: string;               // Fecha en que se leyó
+    // Metadatos
+    createdAt: string;             // Fecha de creación (ISO string)
+    readAt?: string;               // Fecha en que se leyó
 }
 
 // ============================================
@@ -81,15 +81,15 @@ export interface Notification {
  * Configuración de qué notificaciones quiere recibir el usuario
  */
 export interface NotificationPreferences {
-  lowStockAlerts: boolean;       // Alertas de stock bajo
-  outOfStockAlerts: boolean;     // Alertas de stock agotado
-  debtReminders: boolean;        // Recordatorios de deudas
-  debtOverdueAlerts: boolean;    // Alertas de deudas vencidas
-  saleConfirmations: boolean;    // Confirmaciones de ventas
-  invitations: boolean;          // Invitaciones a tiendas
+    lowStockAlerts: boolean;       // Alertas de stock bajo
+    outOfStockAlerts: boolean;     // Alertas de stock agotado
+    debtReminders: boolean;        // Recordatorios de deudas
+    debtOverdueAlerts: boolean;    // Alertas de deudas vencidas
+    saleConfirmations: boolean;    // Confirmaciones de ventas
+    invitations: boolean;          // Invitaciones a tiendas
 
-  // Umbral de días para alertar sobre deudas (ej: 3 = 3 días antes de vencer)
-  debtReminderDays: number;
+    // Umbral de días para alertar sobre deudas (ej: 3 = 3 días antes de vencer)
+    debtReminderDays: number;
 }
 
 // ============================================
@@ -100,13 +100,13 @@ export interface NotificationPreferences {
  * Preferencias por defecto al crear un usuario nuevo
  */
 export const defaultNotificationPreferences: NotificationPreferences = {
-  lowStockAlerts: true,
-  outOfStockAlerts: true,
-  debtReminders: true,
-  debtOverdueAlerts: true,
-  saleConfirmations: false,      // Por defecto desactivadas (pueden ser muchas)
-  invitations: true,
-  debtReminderDays: 3,
+    lowStockAlerts: true,
+    outOfStockAlerts: true,
+    debtReminders: true,
+    debtOverdueAlerts: true,
+    saleConfirmations: false,      // Por defecto desactivadas (pueden ser muchas)
+    invitations: true,
+    debtReminderDays: 3,
 };
 
 // ============================================
