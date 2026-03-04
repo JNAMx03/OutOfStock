@@ -252,19 +252,3 @@ export const alertsService = {
         });
     },
 };
-
-// ============================================
-// EXPLICACIÓN SIMPLE:
-// ============================================
-// Este servicio es como un "inspector automático" de la app.
-//
-// Se encarga de:
-// 1. Revisar si algún producto tiene poco stock → genera alerta
-// 2. Revisar si algún producto se agotó → genera alerta urgente
-// 3. Revisar si hay deudas próximas a vencer → genera recordatorio
-// 4. Revisar si hay deudas vencidas → genera alerta urgente
-// 5. Crear notificación de invitación cuando alguien te invita
-//
-// Lo importante: usa isDuplicate() para NO crear la misma alerta
-// dos veces en el mismo día. Así no llenas la app de notificaciones iguales.
-// ============================================
