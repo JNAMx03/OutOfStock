@@ -1,21 +1,19 @@
-// 📌 STORE DE NOTIFICACIONES - Estado global de todas las alertas de la app
+// src/stores/notifications.ts
+// 📌 STORE DE NOTIFICACIONES - Gestiona todo el sistema de alertas
 
+// ============================================
+// IMPORTS
+// ============================================
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type {
     Notification,
     NotificationPreferences,
-    CreateNotificationData,
+    StockAlertData,
+    DebtAlertData,
 } from '@/models/Notification';
-import { defaultNotificationPreferences } from '@/models/Notification';
-
-// ============================================
-// CLAVE PARA LOCALSTORAGE
-// ============================================
-// Guardamos las notificaciones en localStorage para que persistan
-// entre sesiones (no se pierdan si el usuario cierra la app)
-const STORAGE_KEY = 'inventory_notifications';
-const PREFS_KEY = 'inventory_notification_prefs';
+import { getDefaultPreferences } from '@/models/Notification';
+import * as notificationsService from '@/services/notifications.service';
 
 // ============================================
 // STORE DE NOTIFICACIONES
@@ -25,260 +23,393 @@ export const useNotificationsStore = defineStore('notifications', () => {
     // ============================================
     // ESTADO (State)
     // ============================================
-
-    // Lista de todas las notificaciones
+    
+    // Lista de todas las notificaciones de la tienda actual
     const notifications = ref<Notification[]>([]);
-
-    // Preferencias del usuario sobre qué notificaciones recibir
-    const preferences = ref<NotificationPreferences>({ ...defaultNotificationPreferences });
-
-    // Indica si el panel de notificaciones está abierto
-    const isPanelOpen = ref(false);
+    
+    // Preferencias de notificación del usuario
+    const preferences = ref<NotificationPreferences>(getDefaultPreferences());
+    
+    // Estado de carga
+    const isLoading = ref(false);
+    
+    // ID de la tienda y usuario actual (para saber qué cargar)
+    const currentStoreId = ref<string | null>(null);
+    const currentUserId = ref<string | null>(null);
 
     // ============================================
     // GETTERS (Computed)
     // ============================================
-
-    // Solo las notificaciones NO leídas
-    const unreadNotifications = computed(() =>
-        notifications.value.filter((n) => n.status === 'unread')
-    );
-
-    // Cantidad de notificaciones sin leer (para el badge del ícono)
-    const unreadCount = computed(() => unreadNotifications.value.length);
-
-    // Notificaciones agrupadas por prioridad (primero las más urgentes)
-    const sortedNotifications = computed(() =>
-        [...notifications.value]
-        .filter((n) => n.status !== 'dismissed')
-        .sort((a, b) => {
-            // Primero las no leídas
-            if (a.status === 'unread' && b.status !== 'unread') return -1;
-            if (a.status !== 'unread' && b.status === 'unread') return 1;
-
-            // Luego por prioridad
-            const priorityOrder = { high: 0, medium: 1, low: 2 };
-            const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
-            if (priorityDiff !== 0) return priorityDiff;
-
-            // Por último, las más recientes primero
-            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        })
-    );
-
-    // Solo alertas de alta prioridad sin leer (para mostrar en el banner)
-    const urgentNotifications = computed(() =>
-        unreadNotifications.value.filter((n) => n.priority === 'high')
-    );
-
-    // ¿Hay notificaciones urgentes sin leer?
-    const hasUrgentAlerts = computed(() => urgentNotifications.value.length > 0);
-
-    // ============================================
-    // ACCIONES - CRUD DE NOTIFICACIONES
-    // ============================================
-
+    
     /**
-     * Carga las notificaciones guardadas en localStorage
-     * Se llama cuando la app inicia
+     * Solo las notificaciones NO leídas
      */
-    function loadFromStorage(): void {
-        try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                notifications.value = JSON.parse(saved);
-            }
+    const unreadNotifications = computed(() =>
+        notifications.value.filter(n => !n.isRead)
+    );
+    
+    /**
+     * Conteo de notificaciones no leídas
+     * Este es el número que se muestra en el badge del ícono 🔔
+     */
+    const unreadCount = computed(() => unreadNotifications.value.length);
+    
+    /**
+     * ¿Hay notificaciones sin leer?
+     * Para mostrar/ocultar el badge
+     */
+    const hasUnread = computed(() => unreadCount.value > 0);
+    
+    /**
+     * Solo las alertas de stock bajo (no leídas)
+     * Para el Dashboard de inventario
+     */
+    const stockAlerts = computed(() =>
+        notifications.value.filter(n => n.type === 'stock_alert' && !n.isRead)
+    );
+    
+    /**
+     * Solo las alertas de deuda (no leídas)
+     * Para el módulo de cartera
+     */
+    const debtAlerts = computed(() =>
+        notifications.value.filter(n => n.type === 'debt_alert' && !n.isRead)
+    );
+    
+    /**
+     * Invitaciones pendientes (no leídas)
+     */
+    const pendingInvitations = computed(() =>
+        notifications.value.filter(n => n.type === 'invitation' && !n.isRead)
+    );
+    
+    /**
+     * Notificaciones agrupadas por tipo para la UI
+     */
+    const groupedByType = computed(() => {
+        const groups: Record<string, Notification[]> = {};
+        notifications.value.forEach(n => {
+        if (!groups[n.type]) groups[n.type] = [];
+        groups[n.type].push(n);
+        });
+        return groups;
+    });
 
-            const savedPrefs = localStorage.getItem(PREFS_KEY);
-            if (savedPrefs) {
-                preferences.value = { ...defaultNotificationPreferences, ...JSON.parse(savedPrefs) };
-            }
+    // ============================================
+    // ACCIONES (Actions)
+    // ============================================
+    
+    /**
+     * 📋 FETCH - Carga las notificaciones de la tienda actual
+     * @param storeId - ID de la tienda
+     * @param userId - ID del usuario (para cargar preferencias)
+     */
+    async function fetchNotifications(storeId: string, userId: string) {
+        isLoading.value = true;
+        currentStoreId.value = storeId;
+        currentUserId.value = userId;
+        
+        try {
+            // Cargar notificaciones y preferencias en paralelo
+            const [fetchedNotifications, fetchedPreferences] = await Promise.all([
+                notificationsService.getNotifications(storeId),
+                notificationsService.getPreferences(userId),
+            ]);
+            
+            notifications.value = fetchedNotifications;
+            preferences.value = fetchedPreferences;
+            
+            return { success: true };
         } catch (error) {
             console.error('Error al cargar notificaciones:', error);
+            return { success: false, error: 'Error al cargar notificaciones' };
+        } finally {
+            isLoading.value = false;
         }
     }
-
+    
     /**
-     * Guarda las notificaciones en localStorage
-     * Se llama automáticamente después de cada cambio
+     * ✅ MARK AS READ - Marca una notificación como leída
+     * @param notificationId - ID de la notificación
      */
-    function saveToStorage(): void {
+    async function markAsRead(notificationId: string) {
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications.value));
-        } catch (error) {
-            console.error('Error al guardar notificaciones:', error);
-        }
-    }
-
-    /**
-     * ➕ Crea una nueva notificación
-     * @param data - Datos de la notificación a crear
-     * @returns La notificación creada
-     */
-    function addNotification(data: CreateNotificationData): Notification {
-        const newNotification: Notification = {
-            ...data,
-            id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            status: 'unread',
-            createdAt: new Date().toISOString(),
-        };
-
-        // Agrega al inicio de la lista (las más nuevas primero)
-        notifications.value.unshift(newNotification);
-
-        // Limita a máximo 100 notificaciones para no llenar el storage
-        if (notifications.value.length > 100) {
-            notifications.value = notifications.value.slice(0, 100);
-        }
-
-        saveToStorage();
-        return newNotification;
-    }
-
-    /**
-     * ✅ Marca una notificación como leída
-     * @param id - ID de la notificación
-     */
-    function markAsRead(id: string): void {
-        const notification = notifications.value.find((n) => n.id === id);
-        if (notification && notification.status === 'unread') {
-            notification.status = 'read';
-            notification.readAt = new Date().toISOString();
-            saveToStorage();
-        }
-    }
-
-    /**
-     * ✅ Marca TODAS las notificaciones como leídas
-     */
-    function markAllAsRead(): void {
-        const now = new Date().toISOString();
-        notifications.value.forEach((n) => {
-            if (n.status === 'unread') {
-                n.status = 'read';
-                n.readAt = now;
+            // Actualizar localmente (inmediato para mejor UX)
+            const index = notifications.value.findIndex(n => n.id === notificationId);
+            if (index !== -1) {
+                notifications.value[index].isRead = true;
+                notifications.value[index].readAt = new Date().toISOString();
             }
-        });
-        saveToStorage();
-    }
-
-    /**
-     * ❌ Descarta (oculta) una notificación
-     * @param id - ID de la notificación
-     */
-    function dismissNotification(id: string): void {
-        const notification = notifications.value.find((n) => n.id === id);
-        if (notification) {
-            notification.status = 'dismissed';
-            saveToStorage();
+            
+            // Persistir en el servicio
+            await notificationsService.markAsRead(notificationId);
+            
+            return { success: true };
+        } catch (error) {
+            console.error('Error al marcar como leída:', error);
+            return { success: false };
         }
     }
-
+    
     /**
-     * 🗑️ Elimina notificaciones leídas (limpieza)
+     * ✅✅ MARK ALL AS READ - Marca TODAS como leídas
      */
-    function clearReadNotifications(): void {
-        notifications.value = notifications.value.filter((n) => n.status !== 'read');
-        saveToStorage();
+    async function markAllAsRead() {
+        if (!currentStoreId.value) return { success: false };
+        
+        try {
+        // Actualizar localmente
+            const now = new Date().toISOString();
+            notifications.value = notifications.value.map(n => ({
+                ...n,
+                isRead: true,
+                readAt: n.readAt || now,
+            }));
+            
+            // Persistir
+            await notificationsService.markAllAsRead(currentStoreId.value);
+            
+            return { success: true };
+        } catch (error) {
+            console.error('Error al marcar todas como leídas:', error);
+            return { success: false };
+        }
     }
-
+    
     /**
-     * 🗑️ Elimina TODAS las notificaciones
+     * 🗑️ DELETE - Elimina una notificación
+     * @param notificationId - ID de la notificación
      */
-    function clearAllNotifications(): void {
-        notifications.value = [];
-        saveToStorage();
+    async function deleteNotification(notificationId: string) {
+        try {
+            // Eliminar localmente
+            notifications.value = notifications.value.filter(n => n.id !== notificationId);
+            
+            // Persistir
+            await notificationsService.deleteNotification(notificationId);
+            
+            return { success: true };
+        } catch (error) {
+            console.error('Error al eliminar notificación:', error);
+            return { success: false };
+        }
     }
-
+    
     /**
-     * Evita notificaciones duplicadas del mismo tipo para el mismo producto/cliente
-     * Útil para no crear 10 alertas de "stock bajo" para el mismo producto
-     * @param type - Tipo de notificación
-     * @param relatedId - ID del elemento relacionado
+     * 🧹 CLEAR READ - Limpia todas las notificaciones leídas
      */
-    function isDuplicate(type: string, relatedId: string, storeId: string): boolean {
-        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-        return notifications.value.some(
-            (n) =>
-                n.type === type &&
-                n.relatedId === relatedId &&
-                n.storeId === storeId &&
-                n.status !== 'dismissed' &&
-                n.createdAt > oneDayAgo // Solo evita duplicados del mismo día
+    async function clearReadNotifications() {
+        if (!currentStoreId.value) return { success: false };
+        
+        try {
+            // Eliminar localmente las leídas
+            notifications.value = notifications.value.filter(n => !n.isRead);
+            
+            // Persistir
+            await notificationsService.deleteAllRead(currentStoreId.value);
+            
+            return { success: true };
+        } catch (error) {
+            console.error('Error al limpiar notificaciones:', error);
+            return { success: false };
+        }
+    }
+    
+    /**
+     * 🚨 CREATE STOCK ALERT - Crea una alerta de stock bajo
+     * Se llama automáticamente desde el inventario store
+     * @param storeId - ID de la tienda
+     * @param storeName - Nombre de la tienda
+     * @param data - Datos del producto con stock bajo
+     */
+    async function createStockAlert(
+        storeId: string,
+        storeName: string,
+        data: StockAlertData
+    ) {
+        // Verificar que las alertas de stock estén habilitadas
+        if (!preferences.value.stockAlerts) return;
+        
+        // Verificar que no exista ya una alerta similar reciente
+        const isDuplicate = await notificationsService.hasDuplicateAlert(
+            storeId,
+            'stock_alert',
+            data.productId
         );
+        if (isDuplicate) return;
+        
+        try {
+            // Determinar prioridad según nivel de stock
+            // Si el stock es 0: prioridad alta (rojo)
+            // Si el stock es menor al mínimo: prioridad media (amarillo)
+            const priority = data.currentStock === 0 ? 'high' : 'medium';
+            
+            const title = data.currentStock === 0
+                ? '⚠️ Sin Stock'
+                : '📦 Stock Bajo';
+            
+            const message = data.currentStock === 0
+                ? `${data.productName} se ha quedado sin stock`
+                : `${data.productName} tiene solo ${data.currentStock} unidades (mínimo: ${data.minimumStock})`;
+            
+            // Crear la notificación
+            const newNotification = await notificationsService.createNotification({
+                type: 'stock_alert',
+                priority,
+                title,
+                message,
+                storeId,
+                storeName,
+                data,
+            });
+            
+            // Agregar al estado local (al inicio de la lista)
+            notifications.value.unshift(newNotification);
+        
+        } catch (error) {
+            console.error('Error al crear alerta de stock:', error);
+        }
     }
-
-    // ============================================
-    // ACCIONES - PREFERENCIAS
-    // ============================================
-
+    
     /**
-     * ⚙️ Actualiza las preferencias de notificaciones del usuario
-     * @param updates - Campos a actualizar
+     * 💰 CREATE DEBT ALERT - Crea una alerta de deuda
+     * Se llama automáticamente desde el store de ventas
+     * @param storeId - ID de la tienda
+     * @param storeName - Nombre de la tienda
+     * @param data - Datos de la deuda
      */
-    function updatePreferences(updates: Partial<NotificationPreferences>): void {
-        preferences.value = { ...preferences.value, ...updates };
-        localStorage.setItem(PREFS_KEY, JSON.stringify(preferences.value));
+    async function createDebtAlert(
+        storeId: string,
+        storeName: string,
+        data: DebtAlertData
+    ) {
+        // Verificar preferencias
+        if (!preferences.value.debtAlerts) return;
+        
+        // Verificar duplicados
+        const isDuplicate = await notificationsService.hasDuplicateAlert(
+            storeId,
+            'debt_alert',
+            data.saleId
+        );
+        if (isDuplicate) return;
+        
+        try {
+            // Determinar prioridad según días vencida
+            const priority = (data.daysOverdue && data.daysOverdue > 7) ? 'high' : 'medium';
+            
+            const title = data.daysOverdue
+                ? `💸 Deuda Vencida (${data.daysOverdue} días)`
+                : '💸 Deuda Pendiente';
+            
+            const message = `${data.clientName} debe $${data.debtAmount.toLocaleString('es-CO')} (${data.saleNumber})`;
+            
+            const newNotification = await notificationsService.createNotification({
+                type: 'debt_alert',
+                priority,
+                title,
+                message,
+                storeId,
+                storeName,
+                data,
+            });
+            
+            notifications.value.unshift(newNotification);
+        
+        } catch (error) {
+            console.error('Error al crear alerta de deuda:', error);
+        }
+    }
+    
+    /**
+     * ⚙️ UPDATE PREFERENCES - Guarda las preferencias del usuario
+     * @param newPreferences - Nuevas preferencias
+     */
+    async function updatePreferences(newPreferences: NotificationPreferences) {
+        if (!currentUserId.value) return { success: false };
+        
+        try {
+            preferences.value = newPreferences;
+            await notificationsService.savePreferences(currentUserId.value, newPreferences);
+            return { success: true };
+        } catch (error) {
+            console.error('Error al guardar preferencias:', error);
+            return { success: false };
+        }
+    }
+    
+    /**
+     * 🔄 REFRESH - Recarga las notificaciones
+     */
+    async function refresh() {
+        if (!currentStoreId.value || !currentUserId.value) return;
+        await fetchNotifications(currentStoreId.value, currentUserId.value);
+    }
+    
+    /**
+     * 🧹 CLEAR - Limpia el store (al hacer logout o cambiar tienda)
+     */
+    function clear() {
+        notifications.value = [];
+        currentStoreId.value = null;
+        currentUserId.value = null;
+        preferences.value = getDefaultPreferences();
     }
 
     // ============================================
-    // ACCIONES - PANEL
-    // ============================================
-
-    /** Abre el panel de notificaciones */
-    function openPanel(): void {
-        isPanelOpen.value = true;
-    }
-
-    /** Cierra el panel de notificaciones */
-    function closePanel(): void {
-        isPanelOpen.value = false;
-    }
-
-    /** Alterna entre abierto y cerrado */
-    function togglePanel(): void {
-        isPanelOpen.value = !isPanelOpen.value;
-    }
-
-    // ============================================
-    // INICIALIZACIÓN
-    // ============================================
-
-    // Carga las notificaciones al crear el store
-    loadFromStorage();
-
-    // ============================================
-    // RETORNAR (exponer al resto de la app)
+    // RETORNAR
     // ============================================
     return {
         // Estado
         notifications,
         preferences,
-        isPanelOpen,
-
+        isLoading,
+        
         // Getters
         unreadNotifications,
         unreadCount,
-        sortedNotifications,
-        urgentNotifications,
-        hasUrgentAlerts,
-
-        // Acciones - Notificaciones
-        loadFromStorage,
-        addNotification,
+        hasUnread,
+        stockAlerts,
+        debtAlerts,
+        pendingInvitations,
+        groupedByType,
+        
+        // Acciones
+        fetchNotifications,
         markAsRead,
         markAllAsRead,
-        dismissNotification,
+        deleteNotification,
         clearReadNotifications,
-        clearAllNotifications,
-        isDuplicate,
-
-        // Acciones - Preferencias
+        createStockAlert,
+        createDebtAlert,
         updatePreferences,
-
-        // Acciones - Panel
-        openPanel,
-        closePanel,
-        togglePanel,
+        refresh,
+        clear,
     };
 });
+
+// ============================================
+// EXPLICACIÓN SIMPLE:
+// ============================================
+// 
+// Este store es el "cerebro" de las notificaciones.
+// 
+// GUARDA:
+// - Lista de todas las notificaciones
+// - Preferencias del usuario
+// 
+// CALCULA:
+// - Cuántas hay sin leer (para el badge 🔔)
+// - Separa por tipo (stock, deudas, invitaciones)
+// 
+// PERMITE:
+// - Marcar como leídas (una o todas)
+// - Eliminar notificaciones
+// - CREAR alertas de stock bajo (automático)
+// - CREAR alertas de deuda (automático)
+// - Guardar preferencias del usuario
+// 
+// Otros stores (inventory, sales) llamarán a
+// createStockAlert() y createDebtAlert() cuando
+// detecten situaciones que requieren alertar.
+// ============================================

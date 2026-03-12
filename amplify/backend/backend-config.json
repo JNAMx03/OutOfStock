@@ -1,4 +1,10 @@
 {
+  "analytics": {
+    "outofstock": {
+      "providerPlugin": "awscloudformation",
+      "service": "Pinpoint"
+    }
+  },
   "auth": {
     "outofstockb7ac9184": {
       "customAuth": false,

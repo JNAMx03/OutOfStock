@@ -19,6 +19,7 @@ import {
     hasPendingDebt 
 } from '@/models/Sale';
 import { useProductsStore } from './products';
+import { useNotificationsStore } from '@/stores/notifications';
 
 // ============================================
 // STORE DE VENTAS
@@ -414,6 +415,47 @@ export const useSalesStore = defineStore('sales', () => {
             isLoading.value = false;
         }
     }
+
+    /**
+     * 💰 CHECK DEBTS - Verifica deudas vencidas y crea alertas
+     * Se llama al cargar el módulo de ventas o cartera
+     * @param storeId - ID de la tienda
+     * @param storeName - Nombre de la tienda
+     */
+    async function checkAndAlertDebts(storeId: string, storeName: string) {
+        const notificationsStore = useNotificationsStore();
+        
+        // Filtrar ventas con deuda pendiente
+        const pendingSales = sales.value.filter(sale =>
+            sale.storeId === storeId &&
+            (sale.status === 'pending' || sale.status === 'partial')
+        );
+        
+        const today = new Date();
+        
+        for (const sale of pendingSales) {
+            // Calcular monto pendiente
+            const pendingAmount = sale.total - (sale.amountPaid || 0);
+            
+            // Calcular días desde la venta
+            const saleDate = new Date(sale.createdAt);
+            const diffDays = Math.floor(
+            (today.getTime() - saleDate.getTime()) / (1000 * 60 * 60 * 24)
+            );
+            
+            // Alertar si la deuda tiene más de 3 días sin pagar
+            if (diffDays >= 3 && pendingAmount > 0) {
+                await notificationsStore.createDebtAlert(storeId, storeName, {
+                    saleId: sale.id,
+                    saleNumber: sale.saleNumber,
+                    clientName: sale.customer?.name || 'Cliente',
+                    clientPhone: sale.customer?.phone,
+                    debtAmount: pendingAmount,
+                    daysOverdue: diffDays,
+                });
+            }
+        }
+    }
     
     /**
      * 🔍 SET FILTERS - Establece filtros de búsqueda
@@ -473,5 +515,6 @@ export const useSalesStore = defineStore('sales', () => {
         clearFilters,
         getSaleById,
         clear,
+        checkAndAlertDebts,
     };
 });

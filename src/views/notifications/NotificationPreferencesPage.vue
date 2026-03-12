@@ -1,381 +1,213 @@
-<!-- src/views/notifications/NotificationPreferencesPage.vue -->
-<!-- 📌 PREFERENCIAS DE NOTIFICACIONES - Configuración de alertas del usuario -->
-
 <template>
     <ion-page>
         <ion-header>
             <ion-toolbar>
                 <ion-buttons slot="start">
-                    <ion-back-button default-href="/tabs/dashboard" text="Volver" />
+                    <ion-button @click="closeModal">
+                        <ion-icon :icon="closeOutline"></ion-icon>
+                    </ion-button>
                 </ion-buttons>
-                <ion-title>Preferencias de alertas</ion-title>
+                <ion-title>Preferencias</ion-title>
+                <ion-buttons slot="end">
+                    <ion-button @click="savePreferences" :disabled="isSaving">
+                        <strong>Guardar</strong>
+                    </ion-button>
+                </ion-buttons>
             </ion-toolbar>
         </ion-header>
 
         <ion-content class="ion-padding">
 
-            <!-- ======================================
-                SECCIÓN: ALERTAS DE INVENTARIO
-                ====================================== -->
-            <div class="section">
-                <div class="section-header">
-                    <ion-icon :icon="cubeIcon" class="section-icon stock-icon" />
-                    <div>
-                        <h2 class="section-title">Alertas de inventario</h2>
-                        <p class="section-desc">Recibe avisos cuando el stock sea bajo o se agote</p>
+            <!-- Descripción -->
+            <div class="section-description">
+                <ion-icon :icon="notificationsOutline" color="primary"></ion-icon>
+                <p>Elige qué tipo de alertas quieres recibir en tu app.</p>
+            </div>
+
+            <!-- Tipos de alertas -->
+            <ion-list>
+                <ion-list-header>
+                    <ion-label>Tipos de Alerta</ion-label>
+                </ion-list-header>
+
+                <!-- Alertas de stock -->
+                <ion-item>
+                    <div slot="start" class="pref-icon pref-icon--stock">
+                        <ion-icon :icon="cubeOutline"></ion-icon>
                     </div>
-                </div>
+                    <ion-label class="ion-text-wrap">
+                        <h3>Alertas de Stock Bajo</h3>
+                        <p>Cuando un producto baje del stock mínimo</p>
+                    </ion-label>
+                    <ion-toggle
+                        v-model="localPrefs.stockAlerts"
+                        slot="end"
+                        color="primary"
+                    ></ion-toggle>
+                </ion-item>
 
-                <ion-list lines="none" class="settings-list">
-                <!-- Toggle: Stock bajo -->
-                    <ion-item class="settings-item">
-                        <div class="setting-info" slot="start">
-                            <span class="setting-label">Stock bajo</span>
-                            <span class="setting-desc">Cuando un producto baje del mínimo</span>
-                        </div>
-                        <ion-toggle
-                            slot="end"
-                            v-model="prefs.lowStockAlerts"
-                            @ion-change="savePreferences"
-                            color="warning"
-                        />
-                    </ion-item>
-
-                    <!-- Toggle: Producto agotado -->
-                    <ion-item class="settings-item">
-                        <div class="setting-info" slot="start">
-                            <span class="setting-label">Producto agotado</span>
-                            <span class="setting-desc">Cuando el stock llegue a 0</span>
-                        </div>
-                        <ion-toggle
-                            slot="end"
-                            v-model="prefs.outOfStockAlerts"
-                            @ion-change="savePreferences"
-                            color="danger"
-                        />
-                    </ion-item>
-                </ion-list>
-            </div>
-
-            <!-- ======================================
-                SECCIÓN: ALERTAS DE DEUDAS
-                ====================================== -->
-            <div class="section">
-                <div class="section-header">
-                    <ion-icon :icon="cashIcon" class="section-icon debt-icon" />
-                    <div>
-                        <h2 class="section-title">Alertas de deudas</h2>
-                        <p class="section-desc">Recordatorios de cobros pendientes</p>
+                <!-- Alertas de deudas -->
+                <ion-item>
+                    <div slot="start" class="pref-icon pref-icon--debt">
+                        <ion-icon :icon="cashOutline"></ion-icon>
                     </div>
-                </div>
+                    <ion-label class="ion-text-wrap">
+                        <h3>Alertas de Deudas</h3>
+                        <p>Cuando un cliente tenga deuda vencida</p>
+                    </ion-label>
+                    <ion-toggle
+                        v-model="localPrefs.debtAlerts"
+                        slot="end"
+                        color="primary"
+                    ></ion-toggle>
+                </ion-item>
 
-                <ion-list lines="none" class="settings-list">
-                    <!-- Toggle: Recordatorio de deuda -->
-                    <ion-item class="settings-item">
-                        <div class="setting-info" slot="start">
-                            <span class="setting-label">Recordatorio de cobro</span>
-                            <span class="setting-desc">Cuando se acerque la fecha de vencimiento</span>
-                        </div>
-                        <ion-toggle
-                            slot="end"
-                            v-model="prefs.debtReminders"
-                            @ion-change="savePreferences"
-                            color="warning"
-                        />
-                    </ion-item>
-
-                    <!-- Toggle: Deuda vencida -->
-                    <ion-item class="settings-item">
-                        <div class="setting-info" slot="start">
-                            <span class="setting-label">Deuda vencida</span>
-                            <span class="setting-desc">Cuando una deuda pase su fecha límite</span>
-                        </div>
-                        <ion-toggle
-                            slot="end"
-                            v-model="prefs.debtOverdueAlerts"
-                            @ion-change="savePreferences"
-                            color="danger"
-                        />
-                    </ion-item>
-
-                    <!-- Selector de anticipación (días) -->
-                    <ion-item class="settings-item" v-if="prefs.debtReminders">
-                        <div class="setting-info" slot="start">
-                            <span class="setting-label">Alertar con anticipación</span>
-                            <span class="setting-desc">¿Con cuántos días de antelación?</span>
-                        </div>
-                        <ion-select
-                            slot="end"
-                            v-model="prefs.debtReminderDays"
-                            interface="popover"
-                            @ion-change="savePreferences"
-                            class="days-select"
-                        >
-                            <ion-select-option :value="1">1 día</ion-select-option>
-                            <ion-select-option :value="2">2 días</ion-select-option>
-                            <ion-select-option :value="3">3 días</ion-select-option>
-                            <ion-select-option :value="5">5 días</ion-select-option>
-                            <ion-select-option :value="7">7 días</ion-select-option>
-                        </ion-select>
-                    </ion-item>
-                </ion-list>
-            </div>
-
-            <!-- ======================================
-                SECCIÓN: OTRAS ALERTAS
-                ====================================== -->
-            <div class="section">
-                <div class="section-header">
-                    <ion-icon :icon="notificationsIcon" class="section-icon other-icon" />
-                    <div>
-                        <h2 class="section-title">Otras notificaciones</h2>
-                        <p class="section-desc">Invitaciones y confirmaciones</p>
+                <!-- Mensajes del sistema -->
+                <ion-item>
+                    <div slot="start" class="pref-icon pref-icon--system">
+                        <ion-icon :icon="informationCircleOutline"></ion-icon>
                     </div>
-                </div>
+                    <ion-label class="ion-text-wrap">
+                        <h3>Mensajes del Sistema</h3>
+                        <p>Actualizaciones y avisos importantes</p>
+                    </ion-label>
+                    <ion-toggle
+                        v-model="localPrefs.systemMessages"
+                        slot="end"
+                        color="primary"
+                    ></ion-toggle>
+                </ion-item>
+            </ion-list>
 
-                <ion-list lines="none" class="settings-list">
-                    <!-- Toggle: Invitaciones -->
-                    <ion-item class="settings-item">
-                        <div class="setting-info" slot="start">
-                            <span class="setting-label">Invitaciones a tiendas</span>
-                            <span class="setting-desc">Cuando alguien te invite como admin o vendedor</span>
-                        </div>
-                        <ion-toggle
-                            slot="end"
-                            v-model="prefs.invitations"
-                            @ion-change="savePreferences"
-                            color="primary"
-                        />
-                    </ion-item>
-
-                    <!-- Toggle: Confirmaciones de venta -->
-                    <ion-item class="settings-item">
-                        <div class="setting-info" slot="start">
-                            <span class="setting-label">Confirmaciones de venta</span>
-                            <span class="setting-desc">Aviso al registrar cada venta (puede ser muchos)</span>
-                        </div>
-                        <ion-toggle
-                            slot="end"
-                            v-model="prefs.saleConfirmations"
-                            @ion-change="savePreferences"
-                            color="success"
-                        />
-                    </ion-item>
-                </ion-list>
-            </div>
-
-            <!-- ======================================
-                SECCIÓN: ACCIONES DE LIMPIEZA
-                ====================================== -->
-            <div class="section">
-                <ion-list lines="none" class="settings-list">
-                    <ion-item
-                        class="settings-item action-item"
-                        button
-                        detail
-                        @click="runChecksNow"
-                    >
-                        <ion-icon slot="start" :icon="refreshIcon" color="primary" />
-                        <ion-label>
-                            <span class="setting-label">Verificar alertas ahora</span>
-                            <span class="setting-desc">Revisa el inventario y deudas manualmente</span>
-                        </ion-label>
-                    </ion-item>
-
-                    <ion-item
-                        class="settings-item action-item danger-action"
-                        button
-                        detail
-                        @click="confirmClearAll"
-                    >
-                        <ion-icon slot="start" :icon="trashIcon" color="danger" />
-                        <ion-label>
-                            <span class="setting-label" style="color: var(--ion-color-danger)">
-                                Borrar todas las notificaciones
-                            </span>
-                            <span class="setting-desc">Elimina todas las alertas actuales</span>
-                        </ion-label>
-                    </ion-item>
-                </ion-list>
-            </div>
+            <!-- Nota informativa -->
+            <ion-card class="info-card">
+                <ion-card-content>
+                    <ion-icon :icon="informationCircleOutline" color="primary"></ion-icon>
+                    <p>
+                        Las notificaciones se muestran dentro de la app.
+                        Las notificaciones push en tu teléfono estarán disponibles
+                        cuando instales la aplicación desde la tienda.
+                    </p>
+                </ion-card-content>
+            </ion-card>
 
         </ion-content>
     </ion-page>
 </template>
 
 <script setup lang="ts">
-    // ============================================
-    // IMPORTS
-    // ============================================
-    import { reactive } from 'vue';
+    import { ref, onMounted } from 'vue';
     import {
-        IonPage, IonHeader, IonToolbar, IonTitle, IonButtons,
-        IonBackButton, IonContent, IonList, IonItem, IonToggle,
-        IonSelect, IonSelectOption, IonIcon, IonLabel,
-        alertController, toastController,
+        IonPage, IonHeader, IonToolbar, IonButtons, IonButton,
+        IonTitle, IonContent, IonList, IonListHeader, IonItem,
+        IonLabel, IonToggle, IonIcon, IonCard, IonCardContent,
+        modalController, toastController,
     } from '@ionic/vue';
     import {
-        cube as cubeIcon,
-        cash as cashIcon,
-        notifications as notificationsIcon,
-        refresh as refreshIcon,
-        trash as trashIcon,
+        closeOutline, notificationsOutline, cubeOutline,
+        cashOutline, informationCircleOutline,
     } from 'ionicons/icons';
+
     import { useNotificationsStore } from '@/stores/notifications';
-    // import { useStoresStore } from '@/stores/stores';
-    import { useAuthStore } from '@/stores/auth';
-    import { alertsService } from '@/services/alerts.service';
+    import type { NotificationPreferences } from '@/models/Notification';
+    import { getDefaultPreferences } from '@/models/Notification';
 
-    // ============================================
-    // STORES
-    // ============================================
     const notificationsStore = useNotificationsStore();
-    // const storesStore = useStoresStore();
-    const authStore = useAuthStore();
+    const isSaving = ref(false);
 
-    // ============================================
-    // ESTADO LOCAL - copia reactiva de las preferencias
-    // ============================================
-    // Hacemos una copia reactiva para que los toggles funcionen en tiempo real
-    const prefs = reactive({ ...notificationsStore.preferences });
+    // Copia local de las preferencias para editar sin afectar el store
+    const localPrefs = ref<NotificationPreferences>(getDefaultPreferences());
 
-    // ============================================
-    // FUNCIONES
-    // ============================================
+    // Al montar, cargar las preferencias actuales del store
+    onMounted(() => {
+        localPrefs.value = { ...notificationsStore.preferences };
+    });
 
-    /** Guarda los cambios de preferencias en el store */
-    function savePreferences(): void {
-        notificationsStore.updatePreferences({ ...prefs });
+    async function closeModal() {
+        await modalController.dismiss();
     }
 
-    /** Ejecuta la verificación de alertas manualmente en la tienda actual */
-    async function runChecksNow(): Promise<void> {
-        const currentStoreId = authStore.user?.currentStoreId;
-        if (!currentStoreId) {
-            const toast = await toastController.create({
-                message: 'Primero selecciona una tienda',
-                duration: 2000,
-                color: 'warning',
-            });
-            await toast.present();
-            return;
+    async function savePreferences() {
+        isSaving.value = true;
+        try {
+            await notificationsStore.updatePreferences(localPrefs.value);
+            await showToast('Preferencias guardadas', 'success');
+            await modalController.dismiss();
+        } catch {
+            await showToast('Error al guardar', 'danger');
+        } finally {
+            isSaving.value = false;
         }
+    }
 
-        alertsService.runAllChecks(currentStoreId);
-
+    async function showToast(message: string, color: string) {
         const toast = await toastController.create({
-            message: '✅ Verificación completada',
-            duration: 2000,
-            color: 'success',
-            position: 'top',
+            message, duration: 2000, position: 'top', color,
         });
         await toast.present();
-    }
-
-    /** Pide confirmación antes de borrar todas las notificaciones */
-    async function confirmClearAll(): Promise<void> {
-        const alert = await alertController.create({
-            header: 'Borrar notificaciones',
-            message: '¿Estás seguro de que quieres eliminar todas las notificaciones?',
-            buttons: [
-                { text: 'Cancelar', role: 'cancel' },
-                {
-                    text: 'Borrar todo',
-                    role: 'destructive',
-                    handler: () => {
-                    notificationsStore.clearAllNotifications();
-                    },
-                },
-            ],
-        });
-        await alert.present();
     }
 </script>
 
 <style scoped>
-    /* Sección con tarjeta de fondo */
-    .section {
-        background: var(--ion-background-color, white);
-        border-radius: 12px;
-        margin-bottom: 16px;
-        overflow: hidden;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
-    }
-
-    /* Header de cada sección (ícono + título + descripción) */
-    .section-header {
+    .section-description {
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 16px 16px 8px;
-        border-bottom: 1px solid var(--ion-color-light);
+        padding: 16px 0;
+        margin-bottom: 8px;
     }
 
-    .section-icon {
-        font-size: 24px;
+    .section-description ion-icon {
+        font-size: 28px;
         flex-shrink: 0;
     }
 
-    .stock-icon { color: var(--ion-color-warning); }
-    .debt-icon  { color: var(--ion-color-danger); }
-    .other-icon { color: var(--ion-color-primary); }
-
-    .section-title {
-        font-size: 15px;
-        font-weight: 600;
-        margin: 0 0 2px;
-        color: var(--ion-color-dark);
-    }
-
-    .section-desc {
-        font-size: 12px;
+    .section-description p {
         color: var(--ion-color-medium);
         margin: 0;
-    }
-
-    /* Lista de configuraciones */
-    .settings-list {
-        padding: 4px 0;
-    }
-
-    .settings-item {
-        --padding-start: 16px;
-        --padding-end: 12px;
-        --min-height: 60px;
-    }
-
-    .setting-info {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        flex: 1;
-        padding-right: 12px;
-    }
-
-    .setting-label {
         font-size: 14px;
-        font-weight: 500;
-        color: var(--ion-color-dark);
+        line-height: 1.5;
     }
 
-    .setting-desc {
-        font-size: 12px;
+    .pref-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 4px;
+    }
+
+    .pref-icon ion-icon {
+        font-size: 20px;
+        color: white;
+    }
+
+    .pref-icon--stock { background: var(--ion-color-warning); }
+    .pref-icon--debt  { background: var(--ion-color-danger); }
+    .pref-icon--system { background: var(--ion-color-primary); }
+
+    .info-card {
+        margin-top: 24px;
+    }
+
+    .info-card ion-card-content {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .info-card ion-icon {
+        font-size: 24px;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .info-card p {
         color: var(--ion-color-medium);
-    }
-
-    .days-select {
-        min-width: 90px;
-        font-size: 14px;
-    }
-
-    /* Ítems de acción (borrar, verificar) */
-    .action-item {
-        --padding-start: 16px;
-    }
-
-    .action-item ion-label {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.5;
     }
 </style>

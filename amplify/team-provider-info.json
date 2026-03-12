@@ -18,6 +18,9 @@
       "storage": {
         "OutOfStockDB": {},
         "inventoryProductDB": {}
+      },
+      "analytics": {
+        "outofstock": {}
       }
     }
   }

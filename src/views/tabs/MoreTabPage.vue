@@ -62,6 +62,12 @@
                     <ion-icon :icon="logOutOutline" slot="start" color="danger"></ion-icon>
                     <ion-label color="danger">Cerrar Sesión</ion-label>
                 </ion-item>
+
+                <ion-item button @click="openNotificationPreferences">
+                    <ion-icon :icon="notificationsOutline" slot="start"></ion-icon>
+                    <ion-label>Preferencias de notificaciones</ion-label>
+                    <ion-icon :icon="chevronForwardOutline" slot="end"></ion-icon>
+                </ion-item>
             </ion-list>
         </ion-content>
     </ion-page>
@@ -96,6 +102,8 @@
     } from 'ionicons/icons';
 
     import { useAuthStore } from '@/stores/auth';
+    // import { useNotificationsStore } from '@/stores/notifications';
+    import { notificationsOutline, chevronForwardOutline } from 'ionicons/icons';
 
     const router = useRouter();
     const authStore = useAuthStore();
@@ -111,5 +119,20 @@
     async function handleLogout() {
         await authStore.logout();
         router.push('/login');
+    }
+
+    async function openNotificationPreferences() {
+        const { modalController } = await import('@ionic/vue');
+        const { default: NotificationPreferencesPage } = await import(
+            '@/views/notifications/NotificationPreferencesPage.vue'
+        );
+        
+        const modal = await modalController.create({
+            component: NotificationPreferencesPage,
+            initialBreakpoint: 0.75,
+            breakpoints: [0, 0.75, 1],
+        });
+        
+        await modal.present();
     }
 </script>

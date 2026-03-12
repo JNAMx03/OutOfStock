@@ -18,6 +18,8 @@ import {
     isOutOfStock,
     calculateSalePrice,
 } from '@/models/Product';
+import { useNotificationsStore } from '@/stores/notifications';
+import { useStoresStore } from '@/stores/stores';
 
 // ============================================
 // STORE DE PRODUCTOS
@@ -300,6 +302,29 @@ export const useProductsStore = defineStore('products', () => {
         await new Promise(resolve => setTimeout(resolve, 500));
         
         products.value[index] = updatedProduct;
+
+        if (data.stock !== undefined) {
+            const storesStore = useStoresStore();
+            const notificationsStore = useNotificationsStore();
+
+            const minimumStock =
+                updatedProduct.minStock ??
+                storesStore.currentStore?.inventorySettings?.lowStockThreshold ??
+                10;
+
+            if (updatedProduct.stock <= minimumStock) {
+                await notificationsStore.createStockAlert(
+                    updatedProduct.storeId,
+                    storesStore.currentStore?.name || 'Tu Tienda',
+                    {
+                        productId: updatedProduct.id,
+                        productName: updatedProduct.name,
+                        currentStock: updatedProduct.stock,
+                        minimumStock: minimumStock,
+                    }
+                );
+            }
+        }
         
         console.log('✅ Producto actualizado exitosamente');
         return { success: true, product: updatedProduct };
@@ -332,36 +357,80 @@ export const useProductsStore = defineStore('products', () => {
     }
 
     /**
-   * 📊 UPDATE STOCK - Actualiza el stock de un producto
-   */
-    async function updateStock(productId: string, quantity: number, operation: 'add' | 'subtract' | 'set') {
+     * 📊 UPDATE STOCK - Actualiza el stock de un producto
+     * Ahora también lanza alerta de stock bajo automáticamente
+     */
+    async function updateStock(
+    productId: string,
+    quantity: number,
+    operation: 'add' | 'subtract' | 'set'
+    ) {
+
+        console.log('🔄 updateStock llamado:', { productId, quantity, operation });
+
         const index = products.value.findIndex(p => p.id === productId);
-        
+
         if (index === -1) {
             return { success: false, error: 'Producto no encontrado' };
         }
-        
+
         const product = products.value[index];
         let newStock = product.stock;
-        
+
         switch (operation) {
-        case 'add':
+            case 'add':
             newStock += quantity;
             break;
-        case 'subtract':
+            case 'subtract':
             newStock -= quantity;
             break;
-        case 'set':
+            case 'set':
             newStock = quantity;
             break;
         }
-        
+
         // No permitir stock negativo
         if (newStock < 0) {
             return { success: false, error: 'Stock no puede ser negativo' };
         }
-        
-        return await updateProduct(productId, { stock: newStock });
+
+        const result = await updateProduct(productId, { stock: newStock });
+
+        console.log('📊 Stock actualizado. Nuevo stock:', newStock, '| minStock:', products.value[index]?.minStock);
+
+        // ============================================
+        // ALERTA AUTOMÁTICA DE STOCK BAJO
+        // Se dispara cuando el stock baja del mínimo
+        // ============================================
+        if (result.success) {
+            const updatedProduct = products.value[index];
+            const storesStore = useStoresStore();
+            const notificationsStore = useNotificationsStore();
+
+            // Obtener el stock mínimo: usa el del producto o el de la tienda como fallback
+            const minimumStock =
+            updatedProduct.minStock ??
+            storesStore.currentStore?.inventorySettings?.lowStockThreshold ??
+            10;
+
+            console.log('🚦 Verificando alerta:', { newStock, minimumStock, debeAlertar: newStock <= minimumStock });
+
+            // Si el nuevo stock está en o por debajo del mínimo → crear alerta
+            if (newStock <= minimumStock) {
+                await notificationsStore.createStockAlert(
+                    updatedProduct.storeId,
+                    storesStore.currentStore?.name || 'Tu Tienda',
+                    {
+                    productId: updatedProduct.id,
+                    productName: updatedProduct.name,
+                    currentStock: newStock,
+                    minimumStock: minimumStock,
+                    }
+                );
+            }
+        }
+
+        return result;
     }
 
     /**

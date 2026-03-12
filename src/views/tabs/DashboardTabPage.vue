@@ -11,15 +11,17 @@
                 <ion-title>{{  storeName || 'Dashboard' }}</ion-title>
 
                 <!-- Botón de notificaciones -->
-                <ion-buttons slot="end">
-                    <ion-button @click="openNotifications">
-                        <ion-icon :icon="notificationsOutline"></ion-icon>
-                        <!-- Badge de notificaciones pendientes -->
-                        <ion-badge v-if="notificationsCount > 0" color="danger" class="notification-badge">
-                            {{ notificationsCount }}
-                        </ion-badge>
-                    </ion-button>
-                </ion-buttons>
+                <ion-button fill="clear" @click="openNotifications" class="notification-btn">
+                    <ion-icon :icon="notificationsOutline"></ion-icon>
+                    <!-- Badge dinámico desde el store -->
+                    <ion-badge
+                        v-if="notificationsStore.hasUnread"
+                        color="danger"
+                        class="notification-badge"
+                    >
+                        {{ notificationsStore.unreadCount > 99 ? '99+' : notificationsStore.unreadCount }}
+                    </ion-badge>
+                </ion-button>
             </ion-toolbar>
         </ion-header>
 
@@ -159,15 +161,16 @@
     import { useStoresStore } from '@/stores/stores';
     import { useProductsStore } from '@/stores/products';
     import { useSalesStore } from '@/stores/sales';
+    import { useNotificationsStore } from '@/stores/notifications';
 
     const router = useRouter();
     const authStore = useAuthStore();
     const storesStore = useStoresStore();
     const productsStore = useProductsStore();
     const salesStore = useSalesStore();
+    const notificationsStore = useNotificationsStore();
 
     // Estado
-    const notificationsCount = ref(0); // TODO: Conectar con store de notificaciones
     const selectedStoreId = ref<string | null>(null);
 
     // Computed
@@ -204,6 +207,14 @@
         if (storesStore.currentStoreId) {
             await productsStore.fetchProducts(storesStore.currentStoreId);
         }
+
+        if (authStore.user && storesStore.currentStore) {
+            await notificationsStore.fetchNotifications(
+                storesStore.currentStore.id,
+                authStore.user.id
+            );
+        }
+        
     });
 
     // Watch para recargar productos si cambia la tienda
@@ -226,9 +237,20 @@
         storesStore.setCurrentStore(storeId);
     }
 
-    function openNotifications() {
-        // TODO: Abrir modal de notificaciones
-        console.log('Abrir notificaciones');
+    async function openNotifications() {
+        // Importa modalController si no está ya importado
+        const { modalController } = await import('@ionic/vue');
+        const { default: NotificationsPage } = await import('@/views/notifications/NotificationsPage.vue');
+        
+        const modal = await modalController.create({
+            component: NotificationsPage,
+            // Estilos de presentación del modal
+            initialBreakpoint: 0.92,
+            breakpoints: [0, 0.5, 0.92],
+            handleBehavior: 'cycle',
+        });
+        
+        await modal.present();
     }
 
     function goToAddProduct() {

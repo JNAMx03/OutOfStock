@@ -1,0 +1,21 @@
+{
+    "appName": "outofstock",
+    "roleName": "pinpointLambdaRole99c1698b",
+    "cloudformationPolicyName": "cloudformationPolicy99c1698b",
+    "cloudWatchPolicyName": "cloudWatchPolicy99c1698b",
+    "pinpointPolicyName": "pinpointPolicy99c1698b",
+    "authPolicyName": "pinpoint_amplify_99c1698b",
+    "unauthPolicyName": "pinpoint_amplify_99c1698b",
+    "authRoleName": {
+        "Ref": "AuthRoleName"
+    },
+    "unauthRoleName": {
+        "Ref": "UnauthRoleName"
+    },
+    "authRoleArn": {
+        "Fn::GetAtt": [
+            "AuthRole",
+            "Arn"
+        ]
+    }
+}
