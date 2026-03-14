@@ -68,6 +68,18 @@
                     <ion-label>Preferencias de notificaciones</ion-label>
                     <ion-icon :icon="chevronForwardOutline" slot="end"></ion-icon>
                 </ion-item>
+
+                <ion-item button @click="router.push('/portfolio')" detail>
+                    <ion-icon :icon="peopleOutline" slot="start" color="primary"></ion-icon>
+                    <ion-label>
+                        <h3>Cartera de Clientes</h3>
+                        <p>Deudores, abonos e historial</p>
+                    </ion-label>
+                    <!-- Badge con el número de deudores (si hay) -->
+                    <ion-badge v-if="debtorsCount > 0" color="danger" slot="end">
+                        {{ debtorsCount }}
+                    </ion-badge>
+                </ion-item>
             </ion-list>
         </ion-content>
     </ion-page>
@@ -104,13 +116,16 @@
     import { useAuthStore } from '@/stores/auth';
     // import { useNotificationsStore } from '@/stores/notifications';
     import { notificationsOutline, chevronForwardOutline } from 'ionicons/icons';
+    import { useClientsStore } from '@/stores/clients';
 
     const router = useRouter();
     const authStore = useAuthStore();
+    const clientsStore = useClientsStore();
 
     const isOwner = computed(() => authStore.isOwner);
     const isAdmin = computed(() => authStore.isAdmin);
     const canViewFinancials = computed(() => authStore.isOwner || authStore.isAdmin);
+    const debtorsCount = computed(() => clientsStore.debtorsCount);
 
     function goToStoresManagement() {
         router.push('/stores-management');

@@ -124,6 +124,16 @@ const routes: Array<RouteRecordRaw> = [
       roles: ['owner'], // Solo el dueño puede gestionar tiendas
     },
   },
+  {
+    path: '/portfolio',
+    component: () => import('@/views/portfolio/PortfolioPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/portfolio/client/:id',
+    component: () => import('@/views/portfolio/ClientDetailPage.vue'),
+    meta: { requiresAuth: true },
+  },
 
   // ==========================================
   // RUTA 404 (Página no encontrada)
