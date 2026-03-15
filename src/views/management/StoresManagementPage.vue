@@ -475,3 +475,43 @@
     }
 }
 </style>
+
+<!--
+============================================
+EXPLICACIÓN SIMPLE:
+============================================
+
+Esta página muestra todas las tiendas del usuario.
+
+Funcionalidades:
+
+1. LISTA DE TIENDAS:
+   - Muestra todas las tiendas
+   - Resalta la tienda actual
+   - Muestra logo, nombre, estado, tipo
+   - Información de contacto
+
+2. SELECCIONAR TIENDA:
+   - Click en una card para seleccionarla
+   - Se marca con checkmark y borde azul
+
+3. CREAR TIENDA:
+   - Botón + en el header
+   - Botón grande si no hay tiendas
+
+4. EDITAR TIENDA:
+   - Botón de lápiz en cada card
+   - Abre modal de edición
+
+5. ELIMINAR TIENDA:
+   - Botón de basura
+   - Confirma antes de eliminar
+   - Soft delete (no elimina realmente)
+
+6. ESTADOS:
+   - Loading: Muestra spinner
+   - Con tiendas: Muestra grid/lista
+   - Sin tiendas: Estado vacío con CTA
+
+============================================
+-->

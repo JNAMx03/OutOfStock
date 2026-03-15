@@ -518,3 +518,46 @@ export const useSalesStore = defineStore('sales', () => {
         checkAndAlertDebts,
     };
 });
+
+// ============================================
+// EXPLICACIÓN SIMPLE:
+// ============================================
+// 
+// Este store maneja TODAS las ventas de la tienda.
+// 
+// Funcionalidades principales:
+// 
+// 1. ALMACENA:
+//    - Lista de ventas
+//    - Filtros activos
+// 
+// 2. PERMITE:
+//    - Crear ventas nuevas
+//    - Actualizar ventas
+//    - Agregar pagos (abonos)
+//    - Cancelar ventas
+//    - Buscar y filtrar
+// 
+// 3. CALCULA:
+//    - Total de ventas del día
+//    - Total del mes
+//    - Ganancia del día
+//    - Deudas pendientes
+//    - Estado de la venta (pagada, pendiente, parcial)
+// 
+// 4. AUTOMATIZA:
+//    - Genera números de venta (V-0001, V-0002...)
+//    - Actualiza el stock automáticamente
+//    - Calcula totales y ganancias
+//    - Maneja el estado según los pagos
+// 
+// 5. FILTRA:
+//    - Por búsqueda (número o cliente)
+//    - Por estado (pagada, pendiente, etc.)
+//    - Por método de pago
+//    - Por rango de fechas
+//    - Ordenar por diferentes criterios
+// 
+// Los datos por ahora son locales (mock).
+// En futuras fases conectaremos con DynamoDB.
+// ============================================

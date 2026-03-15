@@ -174,3 +174,40 @@
         }
     }
 </style>
+
+<!-- 
+============================================
+EXPLICACIÓN SIMPLE:
+============================================
+
+Este componente es el LAYOUT PRINCIPAL con tabs.
+
+¿Qué hace?
+
+1. CREA la navegación por tabs en la parte inferior
+   - Similar a WhatsApp, Instagram, etc.
+   - 5 tabs principales: Inicio, Inventario, Ventas, Finanzas, Más
+
+2. MUESTRA/OCULTA tabs según permisos
+   - El tab "Finanzas" solo aparece para Owner y Admin
+   - Los Vendedores no ven ese tab
+
+3. NAVEGA entre secciones
+   - Al hacer clic en un tab, cambia la página mostrada
+   - Ionic maneja automáticamente las transiciones
+
+4. ES RESPONSIVE
+   - En móvil: tabs abajo
+   - En tablet/desktop: puede adaptarse
+
+Estructura:
+- IonTabs: Contenedor principal
+  ├─ IonRouterOutlet: Aquí se muestran las páginas
+  └─ IonTabBar: Barra de tabs
+     └─ IonTabButton (x5): Cada botón es un tab
+
+Próximo paso:
+Crearemos las páginas que se muestran en cada tab.
+
+============================================
+-->

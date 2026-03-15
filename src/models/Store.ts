@@ -252,3 +252,31 @@ export function validateStoreData(data: CreateStoreData): { valid: boolean; erro
     errors,
   };
 }
+
+// ============================================
+// EXPLICACIÓN SIMPLE:
+// ============================================
+// 
+// Este store maneja TODAS las tiendas del usuario.
+// 
+// Funcionalidades principales:
+// 
+// 1. ALMACENA:
+//    - Lista de todas las tiendas
+//    - Tienda actual seleccionada
+// 
+// 2. PERMITE:
+//    - Crear nuevas tiendas
+//    - Editar tiendas existentes
+//    - "Eliminar" tiendas (realmente las marca como cerradas)
+//    - Cambiar entre tiendas
+// 
+// 3. PROVEE:
+//    - Tienda actual
+//    - Solo tiendas activas
+//    - Conteo de tiendas
+// 
+// Por ahora usa datos de ejemplo (mock data).
+// En futuras fases, conectaremos esto con DynamoDB
+// para que los datos persistan en la nube.
+// ============================================

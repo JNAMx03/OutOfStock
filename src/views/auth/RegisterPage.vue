@@ -386,8 +386,41 @@
     }
 
     @media (max-width: 576px) {
-    .register-card {
-        box-shadow: none;
-    }
+        .register-card {
+            box-shadow: none;
+        }
     }
 </style>
+
+<!--
+============================================
+EXPLICACIÓN SIMPLE:
+============================================
+
+Esta es la página de Registro. ¿Qué hace?
+
+1. MUESTRA un formulario con:
+   - Nombre completo
+   - Email
+   - Contraseña
+   - Confirmar contraseña
+
+2. VALIDA en tiempo real:
+   - Requisitos de contraseña (con iconos visuales)
+   - Que el email sea válido
+   - Que las contraseñas coincidan
+
+3. CREA la cuenta en AWS Cognito
+
+4. MUESTRA un alert explicando que debe confirmar su email
+
+5. REDIRIGE a la página de confirmación
+
+Características especiales:
+- Validación visual de contraseña
+- Botón deshabilitado si el form no es válido
+- Mensajes de error claros
+- Diseño responsive
+
+============================================
+-->

@@ -650,3 +650,44 @@
         }
     }
 </style>
+
+<!--
+============================================
+EXPLICACIÓN SIMPLE:
+============================================
+
+Este formulario permite crear y editar productos.
+
+Funcionalidades principales:
+
+1. MODO DUAL:
+   - Crear: Si NO se pasa un producto
+   - Editar: Si se pasa un producto existente
+
+2. CÁLCULO AUTOMÁTICO:
+   - Al cambiar precio de compra → calcula precio de venta
+   - Al cambiar margen → recalcula precio de venta
+   - Al cambiar precio de venta manualmente → recalcula margen
+   - Muestra ganancia en tiempo real
+
+3. VALIDACIÓN:
+   - Campos requeridos marcados con *
+   - No permite precios negativos
+   - Precio de venta debe ser mayor a compra
+
+4. SECCIONES:
+   - Información básica (nombre, descripción, SKU, barcode)
+   - Precios y ganancia (con cálculo automático)
+   - Inventario (stock, unidades, mínimo/máximo)
+
+5. UX:
+   - Campos agrupados visualmente
+   - Card de resumen de ganancia
+   - Helpers explicativos
+   - Responsive (columnas en móvil, filas en desktop)
+
+El formulario es inteligente y ayuda al usuario
+a calcular precios correctos sin esfuerzo.
+
+============================================
+-->

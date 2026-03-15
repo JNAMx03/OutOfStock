@@ -225,3 +225,15 @@ export function validatePassword(password: string): { valid: boolean; message: s
   
   return { valid: true, message: 'Contraseña válida' };
 }
+
+// ============================================
+// EXPLICACIÓN SIMPLE:
+// ============================================
+// Este archivo define:
+// 1. Cómo se ve un usuario (qué datos tiene)
+// 2. Los roles y sus permisos
+// 3. Funciones útiles para trabajar con usuarios
+//
+// Es como un "contrato" que toda la app respeta
+// cuando trabaja con usuarios.
+// ============================================

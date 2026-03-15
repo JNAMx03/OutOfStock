@@ -493,3 +493,40 @@ export const useProductsStore = defineStore('products', () => {
         clear,
     };
 });
+
+// ============================================
+// EXPLICACIÓN SIMPLE:
+// ============================================
+// 
+// Este store maneja TODOS los productos del inventario.
+// 
+// Funcionalidades principales:
+// 
+// 1. ALMACENA:
+//    - Lista de productos por tienda
+//    - Categorías
+//    - Filtros activos
+// 
+// 2. PERMITE:
+//    - Crear productos
+//    - Editar productos
+//    - Eliminar productos (soft delete)
+//    - Actualizar stock
+//    - Buscar y filtrar
+// 
+// 3. CALCULA:
+//    - Productos con stock bajo
+//    - Productos sin stock
+//    - Valor total del inventario
+//    - Precio de venta automático
+// 
+// 4. FILTRA:
+//    - Por búsqueda (nombre, SKU, código de barras)
+//    - Por categoría
+//    - Por estado
+//    - Solo stock bajo
+//    - Ordenar por diferentes criterios
+// 
+// Los datos por ahora son locales (mock).
+// En futuras fases conectaremos con DynamoDB.
+// ============================================

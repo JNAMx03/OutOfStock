@@ -334,3 +334,38 @@
         margin-bottom: 20px;
     }
 </style>
+
+<!-- 
+============================================
+EXPLICACIÓN SIMPLE:
+============================================
+
+El Side Menu muestra:
+
+1. LOGO de la tienda (o placeholder con color)
+
+2. INFORMACIÓN GENERAL:
+   - Nombre
+   - Estado (activa/inactiva)
+   - Tipo de tienda
+
+3. CONTACTO:
+   - Dirección completa
+   - Teléfono (clickeable para llamar)
+   - Email (clickeable para enviar correo)
+
+4. CONFIGURACIÓN (solo Owner/Admin):
+   - Umbral de stock bajo
+   - Margen de ganancia
+
+5. ACCIONES:
+   - Botón para editar tienda
+   - Botón para crear tienda (si no hay ninguna)
+
+Se abre:
+- Al hacer clic en el botón de menú (≡) 
+  en el header
+- Deslizando desde la izquierda (gesto swipe)
+
+============================================
+-->

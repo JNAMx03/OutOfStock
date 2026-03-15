@@ -347,3 +347,33 @@ export function createDefaultProduct(storeId: string, userId: string): Product {
     createdBy: userId,
   };
 }
+
+// ============================================
+// EXPLICACIÓN SIMPLE:
+// ============================================
+// 
+// Este archivo define todo sobre los PRODUCTOS:
+// 
+// 1. Qué información tiene un producto:
+//    - Identificación (nombre, SKU, código de barras)
+//    - Precios (compra, venta, margen)
+//    - Inventario (stock, mínimo, máximo, unidad)
+//    - Estado (activo, inactivo, descontinuado)
+//    - Multimedia (imágenes)
+//    - Categoría
+// 
+// 2. Funciones útiles:
+//    - Calcular precio de venta automáticamente
+//    - Calcular margen de ganancia
+//    - Verificar stock bajo
+//    - Formatear precios
+//    - Validar datos
+// 
+// 3. Unidades de medida:
+//    - Unidad, kg, gramos, litros, paquetes, etc.
+// 
+// 4. Historial de precios:
+//    - Guarda cambios de precios para análisis
+// 
+// Es la "plantilla" que usaremos para todos los productos.
+// ============================================

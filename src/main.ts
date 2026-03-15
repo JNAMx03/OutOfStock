@@ -69,3 +69,14 @@ router.isReady().then(() => {
   // Es como "encender" la aplicación
   app.mount('#app');
 });
+
+// ============================================
+// EXPLICACIÓN SIMPLE:
+// ============================================
+// 1. Importamos todas las herramientas necesarias
+// 2. Creamos Pinia (memoria global)
+// 3. Creamos la app Vue
+// 4. Le decimos a la app que use: Ionic, Router y Pinia
+// 5. Esperamos a que todo esté listo
+// 6. "Encendemos" la aplicación
+// ============================================

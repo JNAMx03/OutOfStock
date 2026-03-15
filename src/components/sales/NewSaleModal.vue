@@ -805,3 +805,58 @@
         }
     }
 </style>
+
+<!--
+============================================
+EXPLICACIÓN SIMPLE:
+============================================
+
+Este formulario permite registrar nuevas ventas.
+
+Funcionalidades principales:
+
+1. CARRITO DE PRODUCTOS:
+   - Seleccionar productos del inventario
+   - Agregar cantidades
+   - Incrementar/decrementar
+   - Eliminar productos
+   - Cálculo automático de subtotales
+
+2. TOTALES:
+   - Subtotal calculado automáticamente
+   - Aplicar descuentos
+   - Total final
+
+3. MÉTODO DE PAGO:
+   - Efectivo (muestra cambio si aplica)
+   - Tarjeta
+   - Transferencia
+   - A Crédito (genera deuda)
+
+4. GESTIÓN DE DEUDA:
+   - Si no paga completo, se registra deuda
+   - Muestra monto pendiente
+   - Requiere datos del cliente
+
+5. INFORMACIÓN DEL CLIENTE:
+   - Obligatorio para crédito
+   - Opcional para otros métodos
+   - Nombre, teléfono, dirección
+
+6. VALIDACIONES:
+   - Debe tener productos
+   - Método de pago requerido
+   - Cliente requerido si es crédito
+   - Monto pagado no negativo
+
+7. EXPERIENCIA DE USUARIO:
+   - Selector de productos visual
+   - Cálculos automáticos en tiempo real
+   - Indicadores visuales (cambio, deuda)
+   - Validación en vivo
+
+El formulario actualiza el stock automáticamente
+al registrar la venta.
+
+============================================
+-->

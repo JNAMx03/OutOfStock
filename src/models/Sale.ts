@@ -328,3 +328,40 @@ export function createSaleItemFromProduct(
         purchasePrice: product.purchasePrice,
     };
 }
+
+// ============================================
+// EXPLICACIÓN SIMPLE:
+// ============================================
+// 
+// Este archivo define todo sobre las VENTAS:
+// 
+// 1. Qué información tiene una venta:
+//    - Número de venta (V-0001, V-0002...)
+//    - Items vendidos (productos, cantidades, precios)
+//    - Cliente (nombre, teléfono, dirección)
+//    - Método de pago (efectivo, tarjeta, crédito...)
+//    - Totales (subtotal, descuento, total)
+//    - Estado (pagada, pendiente, parcial)
+//    - Historial de pagos (para créditos)
+// 
+// 2. Funciones útiles:
+//    - Calcular totales automáticamente
+//    - Calcular ganancias
+//    - Verificar si está pagado
+//    - Formatear precios
+//    - Validar datos
+// 
+// 3. Métodos de pago:
+//    - Efectivo
+//    - Tarjeta
+//    - Transferencia
+//    - A Crédito (genera deuda)
+//    - Mixto (combinación)
+// 
+// 4. Gestión de deudas:
+//    - Registro de pagos parciales
+//    - Monto pagado vs monto pendiente
+//    - Historial de abonos
+// 
+// Es la "plantilla" que usaremos para todas las ventas.
+// ============================================

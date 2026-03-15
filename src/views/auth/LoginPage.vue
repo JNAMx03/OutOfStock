@@ -310,3 +310,39 @@
     }
 }
 </style>
+
+<!-- 
+============================================
+EXPLICACIÓN SIMPLE:
+============================================
+
+Esta es la página de Login. ¿Qué hace?
+
+1. MUESTRA un formulario con:
+   - Campo de email
+   - Campo de contraseña
+   - Botón de login
+
+2. VALIDA que los campos no estén vacíos
+
+3. COMUNICA con el authStore para:
+   - Intentar login
+   - Guardar la sesión si es exitoso
+
+4. REDIRIGE al dashboard si el login es exitoso
+
+5. MUESTRA errores si algo sale mal
+
+Componentes Ionic usados:
+- IonPage: Página completa
+- IonContent: Área de contenido
+- IonCard: Tarjeta para el formulario
+- IonInput: Campos de texto
+- IonButton: Botones
+- IonSpinner: Indicador de carga
+- IonToast: Notificaciones
+
+Todo está diseñado para verse profesional
+y funcionar perfecto en móviles.
+============================================
+-->

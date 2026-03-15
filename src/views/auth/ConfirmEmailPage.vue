@@ -378,3 +378,33 @@
     }
 
 </style>
+
+<!--
+============================================
+EXPLICACIÓN:
+============================================
+
+Esta página:
+
+1. RECIBE el email desde la URL (query parameter)
+
+2. MUESTRA un campo para el código de 6 dígitos
+
+3. CONFIRMA el email con AWS Cognito
+
+4. PERMITE reenviar el código con cooldown
+   (evita spam)
+
+5. INCLUYE ayuda para usuarios que no reciben
+   el email
+
+6. REDIRIGE al login cuando se confirma
+
+Características:
+- Cooldown visual para reenvío
+- Accordion con tips de ayuda
+- Validación del código (6 dígitos)
+- Manejo de errores claro
+
+============================================
+-->

@@ -229,3 +229,32 @@ router.beforeEach(async (to, from, next)=>{
 // EXPORTAR EL ROUTER
 // ============================================
 export default router;
+
+
+// ============================================
+// EXPLICACIÓN SIMPLE:
+// ============================================
+// 
+// El router es como un "mapa" de la aplicación.
+// Define:
+// - Qué URL muestra qué página
+// - Qué páginas requieren login
+// - Qué roles pueden acceder a cada página
+//
+// Navigation Guard (beforeEach):
+// Es como un "guardia de seguridad" que verifica:
+// 1. ¿El usuario está logueado?
+// 2. ¿Tiene permisos para ver esta página?
+// 3. ¿Debería ser redirigido a otra parte?
+//
+// Ejemplos:
+// - Usuario NO logueado intenta ir a /dashboard
+//   → Redirigido a /login
+//
+// - Usuario YA logueado intenta ir a /login
+//   → Redirigido a /dashboard
+//
+// - Vendedor intenta acceder a página solo de dueños
+//   → Redirigido a /dashboard
+//
+// ============================================

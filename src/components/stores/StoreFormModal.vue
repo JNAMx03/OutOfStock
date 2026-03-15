@@ -459,3 +459,45 @@
         padding: 16px;
     }
 </style>
+
+<!--
+============================================
+EXPLICACIÓN SIMPLE:
+============================================
+
+Este es un formulario modal para crear/editar tiendas.
+
+Funcionalidades:
+
+1. MODO DUAL:
+   - Crear: Si NO se pasa prop "store"
+   - Editar: Si se pasa una tienda existente
+
+2. VALIDACIÓN:
+   - Campos requeridos marcados con *
+   - Valida antes de enviar
+   - Muestra errores claros
+
+3. SECCIONES:
+   - Información Básica (nombre, tipo)
+   - Ubicación (dirección completa)
+   - Contacto (teléfono, email)
+   - Configuración de Inventario
+   - Personalización (color, logo)
+
+4. ACCIONES:
+   - Crear/Guardar (header derecha)
+   - Cancelar (header izquierda)
+   - Eliminar (footer, solo en edición)
+
+5. UX:
+   - Auto-focus en primer campo
+   - Enter para enviar
+   - Loading states
+   - Toasts de confirmación
+
+El componente es completamente reutilizable
+para ambos casos (crear y editar).
+
+============================================
+-->

@@ -250,7 +250,12 @@ export async function removeUserFromStore(  storeId: string,  userId: string): P
   }
 }
 
-
+// ============================================
+// EXPLICACIÓN SIMPLE:
+// ============================================
+// 
+// Este servicio es la "capa de comunicación" entre
+// nuestra app y DynamoDB.
 // 
 // Funciones principales:
 // - getAllStores: Obtiene todas las tiendas del usuario

@@ -89,3 +89,34 @@
     scroll-behavior: smooth
   }
 </style>
+
+<!-- 
+============================================
+EXPLICACIÓN SIMPLE:
+============================================
+
+App.vue es el componente RAÍZ de la aplicación.
+Es como la "caja principal" que contiene todo.
+
+¿Qué hace?
+
+1. VERIFICA si hay una sesión activa al iniciar
+   - Si el usuario estaba logueado, restaura su sesión
+   - Si no, continúa normalmente
+
+2. CONTIENE el IonRouterOutlet
+   - Aquí se "renderizan" (muestran) todas las páginas
+   - Es como una ventana que muestra la página actual
+
+3. DEFINE estilos globales
+   - Estilos que se aplican a toda la app
+
+Flujo:
+App inicia → Verifica sesión → Muestra página correspondiente
+  ↓
+¿Hay sesión? 
+  → Sí: Redirige a Dashboard
+  → No: Muestra Login
+
+============================================
+-->

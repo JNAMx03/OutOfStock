@@ -335,3 +335,37 @@ http://ionicframework.com/docs/theming/ */
     transform: translateY(-2px);
     box-shadow: var(--ion-box-shadow-lg);
 }
+
+/* ==========================================
+   EXPLICACIÓN:
+   ========================================== 
+   
+   Este archivo define:
+   
+   1. COLORES del tema Ionic
+      - Primary, Secondary, Success, etc.
+      - Versiones para modo oscuro
+   
+   2. TIPOGRAFÍA
+      - Tamaños de texto predefinidos
+      - Familia de fuentes
+   
+   3. ESPACIADO
+      - Padding y margin estándar
+   
+   4. BORDES Y SOMBRAS
+      - Radios de borde
+      - Sombras en diferentes tamaños
+   
+   5. VARIABLES PERSONALIZADAS
+      - Específicas de nuestra app
+   
+   6. MODO OSCURO
+      - Colores adaptados para dark mode
+      - Se activa automáticamente según
+        preferencia del sistema
+   
+   Puedes modificar cualquier variable aquí
+   para cambiar la apariencia de toda la app.
+   
+   ========================================== */
