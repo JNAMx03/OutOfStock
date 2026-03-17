@@ -103,6 +103,11 @@ const routes: Array<RouteRecordRaw> = [
           roles: ['owner', 'admin', 'seller'],
         },
       },
+      {
+        path: '/staff',
+        component: () => import('@/views/staff/StaffPage.vue'),
+        meta: { requiresAuth: true },
+      },
     ],
   },
 

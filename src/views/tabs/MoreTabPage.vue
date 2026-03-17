@@ -34,9 +34,19 @@
                     <ion-label>Mis Tiendas</ion-label>
                 </ion-item>
 
-                <ion-item button v-if="isOwner || isAdmin">
-                    <ion-icon :icon="peopleOutline" slot="start"></ion-icon>
-                    <ion-label>Personal</ion-label>
+                <ion-item button detail v-if="isOwner || isAdmin" @click="router.push('/staff')">
+                    <ion-icon :icon="peopleOutline" slot="start" color="primary"></ion-icon>
+                    <ion-label>
+                        <h3>Personal</h3>
+                        <p>Gestiona tu equipo de trabajo</p>
+                    </ion-label>
+                    <ion-badge
+                        v-if="pendingInvitesCount > 0"
+                        color="warning"
+                        slot="end"
+                    >
+                        {{ pendingInvitesCount }}
+                    </ion-badge>
                 </ion-item>
 
                 <ion-item button v-if="canViewFinancials">
@@ -86,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-    import { computed } from 'vue';
+    import { computed, onMounted } from 'vue';
     import { useRouter } from 'vue-router';
     import {
         IonPage,
@@ -101,6 +111,7 @@
         IonItem,
         IonLabel,
         IonIcon,
+        IonBadge,
     } from '@ionic/vue';
     import {
         personOutline,
@@ -117,15 +128,26 @@
     // import { useNotificationsStore } from '@/stores/notifications';
     import { notificationsOutline, chevronForwardOutline } from 'ionicons/icons';
     import { useClientsStore } from '@/stores/clients';
+    import { useStoresStore } from '@/stores/stores';
+    import { useStaffStore } from '@/stores/staff';
 
     const router = useRouter();
     const authStore = useAuthStore();
     const clientsStore = useClientsStore();
+    const storesStore = useStoresStore();
+    const staffStore = useStaffStore();
 
     const isOwner = computed(() => authStore.isOwner);
     const isAdmin = computed(() => authStore.isAdmin);
     const canViewFinancials = computed(() => authStore.isOwner || authStore.isAdmin);
     const debtorsCount = computed(() => clientsStore.debtorsCount);
+    const pendingInvitesCount = computed(() => staffStore.getPendingInvitesByStore(storesStore.currentStoreId || '').length);
+
+    onMounted(async () => {
+        if (storesStore.currentStoreId) {
+            await staffStore.fetchStaff(storesStore.currentStoreId);
+        }
+    });
 
     function goToStoresManagement() {
         router.push('/stores-management');
