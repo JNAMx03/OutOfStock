@@ -282,8 +282,17 @@
     import { useFinancialsStore } from '@/stores/financials';
     import type { FinancialPeriod } from '@/stores/financials';
     import { getSaleStatusColor, getSaleStatusName } from '@/models/Sale';
-    import SalesChart from '@/components/financial/SalesChart.vue';
-    import PaymentChart from '@/components/financial/PaymentChart.vue';
+    // import SalesChart from '@/components/financial/SalesChart.vue';
+    // import PaymentChart from '@/components/financial/PaymentChart.vue';
+    import { defineAsyncComponent } from 'vue';
+
+    const SalesChart = defineAsyncComponent(() =>
+        import('@/components/financial/SalesChart.vue')
+    );
+
+    const PaymentChart = defineAsyncComponent(() =>
+        import('@/components/financial/PaymentChart.vue')
+    );
 
     // ============================================
     // COMPOSABLES

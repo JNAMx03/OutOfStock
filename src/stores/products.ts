@@ -20,6 +20,7 @@ import {
 } from '@/models/Product';
 import { useNotificationsStore } from '@/stores/notifications';
 import { useStoresStore } from '@/stores/stores';
+import * as cacheService from '@/services/cache.service';
 
 // ============================================
 // STORE DE PRODUCTOS
@@ -147,67 +148,105 @@ export const useProductsStore = defineStore('products', () => {
     // ============================================
     
     /**
-     * 📋 FETCH PRODUCTS - Obtiene productos de una tienda
+     * 📋 FETCH PRODUCTS - Obtiene productos con estrategia caché-primero
+     * 1. Muestra datos del caché INMEDIATAMENTE (si existen)
+     * 2. En segundo plano carga del servidor
+     * 3. Actualiza el caché con los nuevos datos
      */
-    async function fetchProducts (storeId: string){
+    async function fetchProducts(storeId: string, forceRefresh: boolean = false) {
         isLoading.value = true;
 
-        try{
-            console.log('Cargando productos de la tienda:', storeId);
+        try {
+            // ============================================
+            // PASO A: Intentar cargar desde caché (rápido)
+            // ============================================
+            if (!forceRefresh) {
+            const cacheKey = `products_${storeId}`;
+            const isValid = await cacheService.isCacheValid(cacheKey, 60); // válido 60 min
 
-            // TODO: Obtener desde DynamoDB/AppSync
-            // Por ahora, mantener productos en memoria
-            // Solo cargar si no hay productos para esta tienda
+            if (isValid) {
+                // Cargar desde IndexedDB
+                const cachedProducts = await cacheService.getItemsByStore<Product>(
+                cacheService.STORES.PRODUCTS,
+                storeId
+                );
 
-            const stroreProducts = products.value.filter(p => p.storeId === storeId);
-
-            if(stroreProducts.length === 0){
-                // cargar productos mock de ejemplo (solo la primera vez)
-                const mockProducts: Product[] = [
-                    {
-                        id: `product-${Date.now()}-1`,
-                        storeId,
-                        name: 'Cerveza Corona 355ml',
-                        description: 'Cerveza mexicana premium',
-                        categoryId: 'cat-1',
-                        barcode: '7501234567890',
-                        purchasePrice: 2500,
-                        salePrice: 3500,
-                        profitMargin: 40,
-                        stock: 48,
-                        minStock: 24,
-                        unit: 'bottle',
-                        status: 'active',
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString(),
-                        createdBy: 'user-1',
-                    },
-                    {
-                        id: `product-${Date.now()}-2`,
-                        storeId,
-                        name: 'Coca-Cola 2L',
-                        description: 'Bebida refrescante',
-                        categoryId: 'cat-2',
-                        barcode: '7506234567891',
-                        purchasePrice: 4000,
-                        salePrice: 6000,
-                        profitMargin: 50,
-                        stock: 8,
-                        minStock: 12,
-                        unit: 'bottle',
-                        status: 'active',
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString(),
-                        createdBy: 'user-1',
-                    },
-                ];
-                products.value.push(...mockProducts);
+                if (cachedProducts.length > 0) {
+                // Mostrar inmediatamente sin esperar al servidor
+                const otherStores = products.value.filter(p => p.storeId !== storeId);
+                products.value = [...otherStores, ...cachedProducts];
+                isLoading.value = false;
+                console.log(`⚡ ${cachedProducts.length} productos cargados desde caché`);
+                return { success: true, fromCache: true };
+                }
             }
-            return {success: true};
-        }catch(error){
-            console.error('Error al cargar productos:', error);
-            return{ success: false, error: 'Error al cargar productos' };
-        }finally{
+            }
+
+            // ============================================
+            // PASO B: Cargar datos frescos (red o mock)
+            // ============================================
+            console.log('📦 Cargando productos frescos para tienda:', storeId);
+
+            // Los productos ya existentes en memoria de otras tiendas
+            const storeProducts = products.value.filter(p => p.storeId === storeId);
+
+            if (storeProducts.length === 0 || forceRefresh) {
+            // Datos mock de ejemplo (en producción vendrán de DynamoDB)
+            const mockProducts: Product[] = [
+                {
+                id: `product-${Date.now()}-1`,
+                storeId,
+                name: 'Cerveza Corona 355ml',
+                description: 'Cerveza mexicana premium',
+                categoryId: 'cat-1',
+                barcode: '7501234567890',
+                purchasePrice: 2500,
+                salePrice: 3500,
+                profitMargin: 40,
+                stock: 48,
+                minStock: 24,
+                unit: 'bottle',
+                status: 'active',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                createdBy: 'user-1',
+                },
+                {
+                id: `product-${Date.now()}-2`,
+                storeId,
+                name: 'Coca-Cola 2L',
+                description: 'Bebida refrescante',
+                categoryId: 'cat-2',
+                barcode: '7506234567891',
+                purchasePrice: 4000,
+                salePrice: 6000,
+                profitMargin: 50,
+                stock: 8,
+                minStock: 12,
+                unit: 'bottle',
+                status: 'active',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                createdBy: 'user-1',
+                },
+            ];
+
+            products.value.push(...mockProducts);
+
+            // ============================================
+            // PASO C: Guardar en caché para la próxima vez
+            // ============================================
+            const allStoreProducts = products.value.filter(p => p.storeId === storeId);
+            await cacheService.saveItems(cacheService.STORES.PRODUCTS, allStoreProducts, storeId);
+            await cacheService.saveLastSync(`products_${storeId}`);
+            console.log('💾 Productos guardados en caché');
+            }
+
+            return { success: true, fromCache: false };
+        } catch (error) {
+            console.error('❌ Error al cargar productos:', error);
+            return { success: false, error: 'Error al cargar productos' };
+        } finally {
             isLoading.value = false;
         }
     }
@@ -256,6 +295,11 @@ export const useProductsStore = defineStore('products', () => {
             await new Promise(resolve => setTimeout(resolve, 500));
 
             products.value.push(newProduct);
+
+            // Actualizar el caché con el nuevo producto
+            const allStoreProducts = products.value.filter(p => p.storeId === storeId);
+            await cacheService.saveItems(cacheService.STORES.PRODUCTS, allStoreProducts, storeId);
+            await cacheService.saveLastSync(`products_${storeId}`);
 
             console.log("producto creado exitosamente");
             return { success: true, product: newProduct };

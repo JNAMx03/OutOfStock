@@ -3,6 +3,7 @@
     IonApp: Componente raíz de Ionic
     Todos los componentes de Ionic deben estar dentro de este
   -->
+  <OfflineBanner />
   <ion-app>
     <!-- Side Menu - Menú lateral con información de la tienda -->
     <side-menu></side-menu>
