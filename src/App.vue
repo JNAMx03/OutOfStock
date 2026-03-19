@@ -26,6 +26,7 @@
   import { onMounted } from 'vue';
   import { useAuthStore } from '@/stores/auth';
   import SideMenu from '@/components/layout/SideMenu.vue';
+  import OfflineBanner from '@/components/shared/OfflineBanner.vue';
 
   // ============================================
   // SETUP
