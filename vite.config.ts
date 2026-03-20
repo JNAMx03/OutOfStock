@@ -159,6 +159,13 @@ export default defineConfig({
         },
       },
     },
+    // Eliminar console.log y debugger en producción
+    terserOptions: {
+      compress: {
+        drop_console: true,    // Elimina console.log
+        drop_debugger: true,   // Elimina debugger
+      },
+    },
 
     // ============================================
     // LÍMITE DE ADVERTENCIA DE CHUNK
