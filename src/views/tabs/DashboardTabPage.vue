@@ -11,7 +11,7 @@
                 <ion-title>{{  storeName || 'Dashboard' }}</ion-title>
 
                 <!-- Botón de notificaciones -->
-                <ion-button fill="clear" @click="openNotifications" class="notification-btn">
+                <ion-button fill="clear" @click="openNotifications" class="notification-btn" slot="end">
                     <ion-icon :icon="notificationsOutline"></ion-icon>
                     <!-- Badge dinámico desde el store -->
                     <ion-badge
