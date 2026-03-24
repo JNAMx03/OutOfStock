@@ -55,45 +55,55 @@ export const useProductsStore = defineStore('products', () => {
     });
 
     /**
-     * Obtiene solo productos activos
+     * Obtiene solo productos activos de la tienda actual
      */
-    const activeProducts = computed(() => 
-        products.value.filter(p => p.status === 'active')
-    );
+    const activeProducts = computed(() => {
+        const storesStore = useStoresStore();
+        return products.value.filter(p => p.status === 'active' && p.storeId === storesStore.currentStoreId);
+    });
 
     /**
-     * Obtiene productos con stock bajo
+     * Obtiene productos con stock bajo de la tienda actual
      */
-    const lowStockProducts = computed(() => 
-        products.value.filter(p => hasLowStock(p) && !isOutOfStock(p))
-    );
+    const lowStockProducts = computed(() => {
+        const storesStore = useStoresStore();
+        return products.value.filter(p => hasLowStock(p) && !isOutOfStock(p) && p.storeId === storesStore.currentStoreId);
+    });
     
     /**
-     * Obtiene productos sin stock
+     * Obtiene productos sin stock de la tienda actual
      */
-    const outOfStockProducts = computed(() => 
-        products.value.filter(p => isOutOfStock(p))
-    );
+    const outOfStockProducts = computed(() => {
+        const storesStore = useStoresStore();
+        return products.value.filter(p => isOutOfStock(p) && p.storeId === storesStore.currentStoreId);
+    });
     
     /**
-     * Cuenta total de productos
+     * Cuenta total de productos de la tienda actual
      */
-    const totalProducts = computed(() => products.value.length);
+    const totalProducts = computed(() => {
+        const storesStore = useStoresStore();
+        return products.value.filter(p => p.storeId === storesStore.currentStoreId).length;
+    });
     
     /**
-     * Valor total del inventario (costo)
+     * Valor total del inventario (costo) de la tienda actual
      */
     const totalInventoryValue = computed(() => {
-        return products.value.reduce((total, p) => {
-        return total + (p.purchasePrice * p.stock);
-        }, 0);
+        const storesStore = useStoresStore();
+        return products.value
+            .filter(p => p.storeId === storesStore.currentStoreId)
+            .reduce((total, p) => {
+            return total + (p.purchasePrice * p.stock);
+            }, 0);
     });
   
     /**
-     * Productos filtrados según filtros activos
+     * Productos filtrados según filtros activos de la tienda actual
      */
     const filteredProducts = computed(() => {
-        let result = [...products.value];
+        const storesStore = useStoresStore();
+        let result = [...products.value].filter(p => p.storeId === storesStore.currentStoreId);
         
         // Filtrar por búsqueda
         if (activeFilters.value.search) {
