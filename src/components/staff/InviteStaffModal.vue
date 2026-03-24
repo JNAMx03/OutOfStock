@@ -34,8 +34,9 @@
         <div class="form-section">
             <h3>Información</h3>
             <ion-item>
-                <ion-label position="floating">Nombre completo *</ion-label>
                 <ion-input
+                    label="Nombre completo *"
+                    label-placement="floating"
                     v-model="form.name"
                     type="text"
                     placeholder="Ej: Carlos García"
@@ -44,8 +45,9 @@
             </ion-item>
 
             <ion-item>
-                <ion-label position="floating">Email *</ion-label>
                 <ion-input
+                    label="Email *"
+                    label-placement="floating"
                     v-model="form.email"
                     type="email"
                     placeholder="correo@ejemplo.com"
@@ -118,7 +120,7 @@
     import { ref, computed } from 'vue';
     import {
         IonPage, IonHeader, IonToolbar, IonButtons, IonButton,
-        IonTitle, IonContent, IonItem, IonLabel, IonInput,
+        IonTitle, IonContent, IonItem, IonInput,
         IonCard, IonCardContent, IonIcon, IonText, IonRadio,
         modalController, toastController,
     } from '@ionic/vue';
