@@ -4,7 +4,7 @@
         <ion-header>
             <ion-toolbar>
                 <ion-buttons slot="start">
-                    <ion-menu-button></ion-menu-button>
+                    <ion-back-button default-href="/tabs/more"></ion-back-button>
                 </ion-buttons>
                 <ion-title>Cartera</ion-title>
                 <ion-buttons slot="end">
@@ -226,7 +226,7 @@
     import { ref, onMounted, watch } from 'vue';
     import { useRouter } from 'vue-router';
     import {
-        IonPage, IonHeader, IonToolbar, IonButtons, IonMenuButton,
+        IonPage, IonHeader, IonToolbar, IonButtons, IonBackButton,
         IonButton, IonTitle, IonContent, IonCard, IonCardContent,
         IonIcon, IonBadge, IonLabel, IonList, IonListHeader, IonItem,
         IonSegment, IonSegmentButton, IonSearchbar, IonSpinner,
