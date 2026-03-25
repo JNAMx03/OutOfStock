@@ -176,8 +176,8 @@
     // Computed
     const userName = computed(() => authStore.user?.name || 'Usuario');
     const storeName = computed(() => storesStore.currentStore?.name || 'Mi Tienda');
-    const stores = computed(() => storesStore.stores);
-    const hasMultipleStores = computed(() => storesStore.storesCount > 1);
+    const stores = computed(() => storesStore.stores.filter(store => store.status === 'active'));
+    const hasMultipleStores = computed(() => stores.value.length > 1);
     const canViewFinancials = computed(() => authStore.isOwner || authStore.isAdmin);
 
     //stats de inventario
