@@ -4,6 +4,8 @@
 // CONFIGURACIÓN DE LA BASE DE DATOS
 // ============================================
 
+import { toRaw } from 'vue';
+
 // Nombre de la base de datos en IndexedDB
 const DB_NAME = 'InventoryAppCache';
 // Versión de la base de datos
@@ -105,6 +107,15 @@ export async function saveItems<T extends { id: string; storeId?: string }>(
     try {
         const db = await openDatabase();
 
+        const normalizeItem = <U>(item: U): U => {
+            const raw = toRaw(item as any) as U;
+            try {
+                return JSON.parse(JSON.stringify(raw));
+            } catch {
+                return raw;
+            }
+        };
+
         return new Promise((resolve, reject) => {
             const transaction = db.transaction(storeName, 'readwrite');
             const objectStore = transaction.objectStore(storeName);
@@ -121,12 +132,12 @@ export async function saveItems<T extends { id: string; storeId?: string }>(
                         cursor.continue();
                     } else {
                         // Después de eliminar, insertar los nuevos
-                        items.forEach(item => objectStore.put(item));
+                        items.forEach(item => objectStore.put(normalizeItem(item)));
                     }
                 };
             } else {
                 // Sin storeId: guardar directamente (upsert)
-                items.forEach(item => objectStore.put(item));
+                items.forEach(item => objectStore.put(normalizeItem(item)));
             }
 
             transaction.oncomplete = () => {
