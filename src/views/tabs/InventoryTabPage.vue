@@ -128,6 +128,40 @@
                     Agregar Primer Producto
                 </ion-button>
             </div>
+
+            <!-- SECCIÓN: Productos Eliminados / Papelera -->
+            <div v-if="discontinuedProducts.length > 0" class="discontinued-section">
+                <div class="section-divider" @click="toggleDiscontinued">
+                    <ion-icon :icon="showDiscontinued ? chevronUpOutline : chevronDownOutline"></ion-icon>
+                    <span>Papelera ({{ discontinuedProducts.length }})</span>
+                </div>
+
+                <div v-if="showDiscontinued" class="products-list faded-list">
+                    <ion-card v-for="product in discontinuedProducts" :key="product.id" class="product-card closed-card">
+                        <ion-card-content>
+                            <div class="product-header">
+                                <div class="product-image grayscale">
+                                    <img v-if="product.image" :src="product.image" :alt="product.name" />
+                                    <ion-icon v-else :icon="cubeOutline"></ion-icon>
+                                </div>
+                                <div class="product-info">
+                                    <h2>{{ product.name }}</h2>
+                                    <ion-badge color="medium">Eliminado</ion-badge>
+                                </div>
+                            </div>
+                            <div class="product-actions">
+                                <ion-button fill="clear" size="small" color="primary" @click.stop="handleReactivateProduct(product)">
+                                    <ion-icon :icon="refreshOutline" slot="start"></ion-icon>
+                                    Restaurar
+                                </ion-button>
+                                <ion-button fill="clear" size="small" color="danger" @click.stop="confirmPermanentDelete(product)">
+                                    <ion-icon :icon="trashOutline" slot="icon-only"></ion-icon>
+                                </ion-button>
+                            </div>
+                        </ion-card-content>
+                    </ion-card>
+                </div>
+            </div>
         </ion-content>
     </ion-page>
 </template>
@@ -163,6 +197,9 @@
         trashOutline,
         alertCircleOutline,
         warningOutline,
+        refreshOutline,
+        chevronDownOutline,
+        chevronUpOutline,
     } from 'ionicons/icons';
     // import { useAuthStore } from '@/stores/auth';
     import { useStoresStore } from '@/stores/stores';
@@ -192,6 +229,7 @@
     const filteredProducts = computed(() => productsStore.filteredProducts);
     const lowStockProducts = computed(() => productsStore.lowStockProducts);
     const outOfStockProducts = computed(() => productsStore.outOfStockProducts);
+    const discontinuedProducts = computed(() => productsStore.discontinuedProducts);
 
     // Lifecycle
     onMounted(async () => {
@@ -263,6 +301,46 @@
             ],
         });
         await alert.present();
+    }
+
+    // Estado para mostrar/ocultar papelera
+    const showDiscontinued = ref(false);
+    function toggleDiscontinued() { showDiscontinued.value = !showDiscontinued.value; }
+
+    async function handleReactivateProduct(product: Product) {
+        const result = await productsStore.reactivateProduct(product.id);
+        if (result.success) {
+            await showToast('Producto restaurado', 'success');
+        } else {
+            await showToast('Error al restaurar', 'danger');
+        }
+    }
+
+    async function confirmPermanentDelete(product: Product) {
+        const alert = await alertController.create({
+            header: 'Eliminar Definitivamente',
+            message: `¿Estás seguro? El producto "${product.name}" se borrará permanentemente.`,
+            buttons: [
+                { text: 'Cancelar', role: 'cancel' },
+                {
+                    text: 'Eliminar',
+                    role: 'destructive',
+                    handler: async () => {
+                        await handlePermanentDelete(product.id);
+                    }
+                }
+            ]
+        });
+        await alert.present();
+    }
+
+    async function handlePermanentDelete(productId: string) {
+        const result = await productsStore.permanentDeleteProduct(productId);
+        if (result.success) {
+            await showToast('Producto eliminado permanentemente', 'medium');
+        } else {
+            await showToast('Error al eliminar', 'danger');
+        }
     }
 
     function openFilters() {
@@ -465,5 +543,40 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
         }
+    }
+
+    /* Estilos Papelera */
+    .discontinued-section {
+        margin-top: 32px;
+        border-top: 1px dashed var(--ion-color-medium);
+        padding-top: 16px;
+        padding-bottom: 32px;
+    }
+    .section-divider {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: var(--ion-color-medium);
+        font-size: 14px;
+        cursor: pointer;
+        padding: 8px;
+        user-select: none;
+    }
+    .faded-list {
+        opacity: 0.8;
+        margin-top: 16px;
+    }
+    .closed-card {
+        background: var(--ion-color-light);
+        border: 1px dashed var(--ion-color-medium);
+    }
+    .closed-card h2 {
+        color: var(--ion-color-medium);
+        text-decoration: line-through;
+    }
+    .grayscale {
+        filter: grayscale(100%);
+        opacity: 0.6;
     }
 </style>

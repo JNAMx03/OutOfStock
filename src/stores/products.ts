@@ -67,7 +67,7 @@ export const useProductsStore = defineStore('products', () => {
      */
     const lowStockProducts = computed(() => {
         const storesStore = useStoresStore();
-        return products.value.filter(p => hasLowStock(p) && !isOutOfStock(p) && p.storeId === storesStore.currentStoreId);
+        return products.value.filter(p => hasLowStock(p) && !isOutOfStock(p) && p.storeId === storesStore.currentStoreId && p.status !== 'discontinued');
     });
     
     /**
@@ -75,7 +75,15 @@ export const useProductsStore = defineStore('products', () => {
      */
     const outOfStockProducts = computed(() => {
         const storesStore = useStoresStore();
-        return products.value.filter(p => isOutOfStock(p) && p.storeId === storesStore.currentStoreId);
+        return products.value.filter(p => isOutOfStock(p) && p.storeId === storesStore.currentStoreId && p.status !== 'discontinued');
+    });
+
+    /**
+     * Obtiene productos descontinuados (papelera) de la tienda actual
+     */
+    const discontinuedProducts = computed(() => {
+        const storesStore = useStoresStore();
+        return products.value.filter(p => p.status === 'discontinued' && p.storeId === storesStore.currentStoreId);
     });
     
     /**
@@ -83,7 +91,7 @@ export const useProductsStore = defineStore('products', () => {
      */
     const totalProducts = computed(() => {
         const storesStore = useStoresStore();
-        return products.value.filter(p => p.storeId === storesStore.currentStoreId).length;
+        return products.value.filter(p => p.storeId === storesStore.currentStoreId && p.status !== 'discontinued').length;
     });
     
     /**
@@ -92,7 +100,7 @@ export const useProductsStore = defineStore('products', () => {
     const totalInventoryValue = computed(() => {
         const storesStore = useStoresStore();
         return products.value
-            .filter(p => p.storeId === storesStore.currentStoreId)
+            .filter(p => p.storeId === storesStore.currentStoreId && p.status !== 'discontinued')
             .reduce((total, p) => {
             return total + (p.purchasePrice * p.stock);
             }, 0);
@@ -103,7 +111,8 @@ export const useProductsStore = defineStore('products', () => {
      */
     const filteredProducts = computed(() => {
         const storesStore = useStoresStore();
-        let result = [...products.value].filter(p => p.storeId === storesStore.currentStoreId);
+        // Excluimos descontinuados de la lista principal
+        let result = [...products.value].filter(p => p.storeId === storesStore.currentStoreId && p.status !== 'discontinued');
         
         // Filtrar por búsqueda
         if (activeFilters.value.search) {
@@ -379,12 +388,47 @@ export const useProductsStore = defineStore('products', () => {
                 );
             }
         }
-        
+
         console.log('✅ Producto actualizado exitosamente');
+        
         return { success: true, product: updatedProduct };
         } catch (error: any) {
             console.error('❌ Error al actualizar producto:', error);
             return { success: false, error: error.message || 'Error al actualizar producto' };
+        } finally {
+            isLoading.value = false;
+        }
+    }
+
+    /**
+     * ♻️ REACTIVATE PRODUCT - Reactiva un producto descontinuado
+     */
+    async function reactivateProduct(productId: string) {
+        return updateProduct(productId, { status: 'active' });
+    }
+
+    /**
+     * 💥 PERMANENT DELETE - Elimina un producto definitivamente
+     */
+    async function permanentDeleteProduct(productId: string) {
+        isLoading.value = true;
+        try {
+            const index = products.value.findIndex(p => p.id === productId);
+            if (index !== -1) {
+                products.value.splice(index, 1);
+                
+                // Actualizar caché
+                const storesStore = useStoresStore();
+                const storeId = storesStore.currentStoreId;
+                if (storeId) {
+                    const allStoreProducts = products.value.filter(p => p.storeId === storeId);
+                    await cacheService.saveItems(cacheService.STORES.PRODUCTS, allStoreProducts, storeId);
+                }
+            }
+            return { success: true };
+        } catch (error: any) {
+            console.error('Error al eliminar definitivamente:', error);
+            return { success: false, error: error.message };
         } finally {
             isLoading.value = false;
         }
@@ -531,6 +575,7 @@ export const useProductsStore = defineStore('products', () => {
         activeProducts,
         lowStockProducts,
         outOfStockProducts,
+        discontinuedProducts,
         totalProducts,
         totalInventoryValue,
         filteredProducts,
@@ -540,6 +585,8 @@ export const useProductsStore = defineStore('products', () => {
         createProduct,
         updateProduct,
         deleteProduct,
+        reactivateProduct,
+        permanentDeleteProduct,
         updateStock,
         setFilters,
         clearFilters,
