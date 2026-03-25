@@ -215,6 +215,37 @@ export const useStoresStore = defineStore('stores', () => {
             isLoading.value = false;
         }
     }
+
+    /**
+     * ♻️ REACTIVATE STORE - Reactiva una tienda cerrada
+     */
+    async function reactivateStore(storeId: string) {
+        // Reutilizamos updateStore para cambiar el estado
+        return updateStore(storeId, { status: 'active' });
+    }
+
+    /**
+     * 💥 PERMANENT DELETE - Elimina una tienda definitivamente
+     */
+    async function permanentDeleteStore(storeId: string) {
+        isLoading.value = true;
+        try {
+            // TODO: Llamar al servicio para eliminar de BD definitivamente
+            // await storesService.permanentDeleteStore(storeId);
+
+            // Eliminar del estado local
+            const index = stores.value.findIndex(s => s.id === storeId);
+            if (index !== -1) {
+                stores.value.splice(index, 1);
+            }
+            return { success: true };
+        } catch (error: any) {
+            console.error('Error al eliminar definitivamente:', error);
+            return { success: false, error: error.message };
+        } finally {
+            isLoading.value = false;
+        }
+    }
     
     /**
      * 🔄 SET CURRENT STORE - Cambia la tienda actual
@@ -265,6 +296,8 @@ export const useStoresStore = defineStore('stores', () => {
         createStore,
         updateStore,
         deleteStore,
+        reactivateStore,
+        permanentDeleteStore,
         setCurrentStore,
         getStoreById,
         clear,

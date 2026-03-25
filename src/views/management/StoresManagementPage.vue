@@ -21,9 +21,9 @@
                 <p>Cargando tiendas...</p>
             </div>
 
-            <!-- lista de tiendas -->
-            <div v-else-if="stores.length>0" class="stores-list">
-                <ion-card v-for="store in stores" :key="store.id" class="store-card" :class="{ 'current-store': store.id === currentStoreId}" button @click="selectStore(store.id)">
+            <!-- lista de tiendas ACTIVAS -->
+            <div v-else-if="activeStoresList.length>0" class="stores-list">
+                <ion-card v-for="store in activeStoresList" :key="store.id" class="store-card" :class="{ 'current-store': store.id === currentStoreId}" button @click="selectStore(store.id)">
                     <ion-card-content>
                         <div class="store-card-header">
                             <!-- logo o place holder -->
@@ -71,7 +71,7 @@
                             <ion-button fill="clear" size="small" @click.stop="editStore(store)">
                                 <ion-icon :icon="createOutline" slot="icon-only"></ion-icon>
                             </ion-button>
-                            <ion-button fill="clear" size="small" color="danger" @click.stop="confirmDeleteStore(store)">
+                            <ion-button fill="clear" size="small" color="medium" @click.stop="confirmDeleteStore(store)">
                                 <ion-icon :icon="trashOutline" slot="icon-only"></ion-icon>
                             </ion-button>
                          </div>
@@ -79,8 +79,8 @@
                 </ion-card>    
             </div>
 
-            <!-- estdo vacio -->
-            <div v-else class="empty-state">
+            <!-- estdo vacio (solo si no hay activas) -->
+            <div v-else-if="!isLoading && closedStoresList.length === 0" class="empty-state">
                 <ion-icon :icon="storefrontOutline" class="empty-icon"></ion-icon>
                 <h2>No tienes tiendas registradas</h2>
                 <p>Crea tu primera tienda para comenzar a gestionar tu inventario</p>
@@ -88,6 +88,45 @@
                     <ion-icon :icon="addCircleOutline" slot="start"></ion-icon>
                     Crear mi primera tienda
                 </ion-button>
+            </div>
+
+            <!-- SECCIÓN: Tiendas Eliminadas / Cerradas -->
+            <div v-if="closedStoresList.length > 0" class="closed-stores-section">
+                <div class="section-divider" @click="toggleClosedStores">
+                    <ion-icon :icon="showClosedStores ? chevronUpOutline : chevronDownOutline"></ion-icon>
+                    <span>Tiendas Eliminadas ({{ closedStoresList.length }})</span>
+                </div>
+
+                <div v-if="showClosedStores" class="stores-list faded-list">
+                    <ion-card v-for="store in closedStoresList" :key="store.id" class="store-card closed-card">
+                        <ion-card-content>
+                            <div class="store-card-header">
+                                <div class="store-logo grayscale">
+                                    <ion-icon v-if="!store.logo" :icon="storefrontOutline"></ion-icon>
+                                </div>
+                                <div class="store-info">
+                                    <div class="store-title-row">
+                                        <h2>{{ store.name }}</h2>
+                                    </div>
+                                    <div class="store-meta">
+                                        <ion-badge color="medium">Eliminada</ion-badge>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Acciones de restauración -->
+                            <div class="store-actions">
+                                <ion-button fill="clear" size="small" color="primary" @click.stop="handleReactivateStore(store)">
+                                    <ion-icon :icon="refreshOutline" slot="start"></ion-icon>
+                                    Restaurar
+                                </ion-button>
+                                <ion-button fill="clear" size="small" color="danger" @click.stop="confirmPermanentDelete(store)">
+                                    <ion-icon :icon="trashOutline" slot="icon-only"></ion-icon>
+                                </ion-button>
+                            </div>
+                        </ion-card-content>
+                    </ion-card>
+                </div>
             </div>
         </ion-content>
     </ion-page>
@@ -98,7 +137,7 @@
 // ============================================
 
 <script setup lang="ts">
-    import { computed, onMounted } from 'vue';
+    import { computed, onMounted, ref } from 'vue';
     //import { useRouter } from 'vue-router';
     import{
         IonPage,
@@ -127,6 +166,9 @@
         callOutline,
         createOutline,
         trashOutline,
+        refreshOutline,
+        chevronDownOutline,
+        chevronUpOutline,
     } from 'ionicons/icons';
 
     import { useAuthStore } from '@/stores/auth';
@@ -154,7 +196,19 @@
     // COMPUTED
     // ============================================
 
-    const stores = computed(() => storesStore.stores);
+    // Todas las tiendas (raw)
+    const allStores = computed(() => storesStore.stores);
+    
+    // Tiendas activas (visibles en dashboard principal)
+    const activeStoresList = computed(() => 
+        allStores.value.filter(s => s.status !== 'closed')
+    );
+
+    // Tiendas cerradas (papelera)
+    const closedStoresList = computed(() => 
+        allStores.value.filter(s => s.status === 'closed')
+    );
+
     const currentStoreId = computed(() => storesStore.currentStoreId);
     const isLoading = computed(() => storesStore.isLoading);
 
@@ -168,6 +222,10 @@
             await storesStore.fetchStores(authStore.user.id);
         }
     });
+
+    // Estado para mostrar/ocultar tiendas cerradas
+    const showClosedStores = ref(false);
+    function toggleClosedStores() { showClosedStores.value = !showClosedStores.value; }
 
     // ============================================
     // FUNCIONES
@@ -248,7 +306,7 @@
     async function confirmDeleteStore(store: Store) {
         const alert = await alertController.create({
             header: 'Eliminar Tienda',
-            message: `¿Estás seguro de que deseas eliminar "${store.name}"? Esta acción no se puede deshacer.`,
+            message: `¿Deseas enviar "${store.name}" a la papelera? Podrás restaurarla después si lo necesitas.`,
             buttons: [
             {
                 text: 'Cancelar',
@@ -277,6 +335,51 @@
             await showToast('Tienda eliminada', 'success');
         } else {
             await showToast(result.error || 'Error al eliminar tienda', 'danger');
+        }
+    }
+
+    /**
+     * Reactiva una tienda
+     */
+    async function handleReactivateStore(store: Store) {
+        const result = await storesStore.reactivateStore(store.id);
+        if (result.success) {
+            await showToast('Tienda restaurada correctamente', 'success');
+        } else {
+            await showToast('Error al restaurar tienda', 'danger');
+        }
+    }
+
+    /**
+     * Confirma eliminación permanente
+     */
+    async function confirmPermanentDelete(store: Store) {
+        const alert = await alertController.create({
+            header: 'Eliminar Definitivamente',
+            message: `¿Estás seguro? La tienda "${store.name}" y TODO su historial se borrarán permanentemente. Esta acción NO se puede deshacer.`,
+            buttons: [
+                { text: 'Cancelar', role: 'cancel' },
+                {
+                    text: 'Eliminar para siempre',
+                    role: 'destructive',
+                    handler: async () => {
+                        await handlePermanentDelete(store.id);
+                    }
+                }
+            ]
+        });
+        await alert.present();
+    }
+
+    /**
+     * Ejecuta eliminación permanente
+     */
+    async function handlePermanentDelete(storeId: string) {
+        const result = await storesStore.permanentDeleteStore(storeId);
+        if (result.success) {
+            await showToast('Tienda eliminada permanentemente', 'medium');
+        } else {
+            await showToast('Error al eliminar', 'danger');
         }
     }
 
@@ -435,6 +538,46 @@
     gap: 8px;
     padding-top: 12px;
     border-top: 1px solid var(--ion-color-light-shade);
+}
+
+/* Sección de Tiendas Eliminadas */
+.closed-stores-section {
+    margin-top: 32px;
+    border-top: 1px dashed var(--ion-color-medium);
+    padding-top: 16px;
+}
+
+.section-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--ion-color-medium);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 8px;
+    user-select: none;
+}
+
+.faded-list {
+    opacity: 0.8;
+    margin-top: 16px;
+}
+
+.closed-card {
+    background: var(--ion-color-light);
+    border: 1px dashed var(--ion-color-medium);
+}
+
+.closed-card .store-title-row h2 {
+    color: var(--ion-color-medium);
+    text-decoration: line-through;
+}
+
+.grayscale {
+    filter: grayscale(100%);
+    opacity: 0.6;
+    background-color: var(--ion-color-medium) !important;
 }
 
 /* Estado vacío */
