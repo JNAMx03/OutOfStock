@@ -192,8 +192,8 @@
                 </div>
 
                 <!-- Información del cliente -->
-                <div v-if="cart.length > 0 && (paymentMethod === 'credit' || amountPaid < total)" class="form-section">
-                    <h3>Cliente {{ paymentMethod === 'credit' ? '*' : '(Opcional)' }}</h3>
+                <div v-if="cart.length > 0" class="form-section">
+                    <h3>Cliente *</h3>
 
                     <ion-item>
                         <ion-input
@@ -202,7 +202,7 @@
                             v-model="customer.name"
                             type="text"
                             placeholder="Nombre completo"
-                            :required="paymentMethod === 'credit'"
+                            :required="true"
                         ></ion-input>
                     </ion-item>
 
@@ -352,8 +352,7 @@
             cart.value.length > 0 &&
             paymentMethod.value &&
             amountPaid.value >= 0 &&
-            // Si es a crédito, debe tener cliente
-            (paymentMethod.value !== 'credit' || customer.value.name.length > 0)
+            customer.value.name.trim().length > 0
         );
     });
 
@@ -479,7 +478,7 @@
         // Preparar datos
         const saleData = {
             items: cart.value,
-            customer: customer.value.name ? customer.value : undefined,
+            customer: customer.value,
             paymentMethod: paymentMethod.value,
             amountPaid: amountPaid.value,
             discount: discount.value || undefined,

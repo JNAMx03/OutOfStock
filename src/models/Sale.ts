@@ -78,7 +78,7 @@ export interface Sale {
     total: number;                // Total a pagar
     
     // Cliente
-    customer?: SaleCustomer;      // Información del cliente (opcional)
+    customer: SaleCustomer;       // Información del cliente (requerido)
     
     // Pago
     paymentMethod: PaymentMethod; // Método de pago principal
@@ -106,7 +106,7 @@ export interface Sale {
  */
 export interface CreateSaleData {
     items: SaleItem[];
-    customer?: SaleCustomer;
+    customer: SaleCustomer;
     paymentMethod: PaymentMethod;
     amountPaid: number;           // Cuánto paga el cliente ahora
     discount?: number;
@@ -301,9 +301,9 @@ export function validateSaleData(data: CreateSaleData): { valid: boolean; errors
         errors.push('El monto pagado no puede ser negativo');
     }
     
-    // Si es a crédito, debe tener información del cliente
-    if (data.paymentMethod === 'credit' && !data.customer) {
-        errors.push('Para ventas a crédito debe registrar el cliente');
+    // Validar cliente
+    if (!data.customer || !data.customer.name.trim()) {
+        errors.push('Debe registrar la información del cliente');
     }
     
     return {
