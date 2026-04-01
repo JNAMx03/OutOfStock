@@ -20,6 +20,7 @@ import {
 } from '@/models/Sale';
 import { useProductsStore } from './products';
 import { useNotificationsStore } from '@/stores/notifications';
+import { useStoresStore } from '@/stores/stores';
 
 // ============================================
 // STORE DE VENTAS
@@ -39,6 +40,10 @@ export const useSalesStore = defineStore('sales', () => {
     // Estado de carga
     const isLoading = ref(false);
 
+    // Store actual
+    const storesStore = useStoresStore();
+    const currentStoreId = computed(() => storesStore.currentStoreId);
+
     // ============================================
     // GETTERS (Computed)
     // ============================================
@@ -51,25 +56,26 @@ export const useSalesStore = defineStore('sales', () => {
     });
     
     /**
-     * Obtiene ventas completadas (pagadas)
+     * Obtiene ventas completadas (pagadas) de la tienda actual
      */
     const completedSales = computed(() => 
-        sales.value.filter(s => s.status === 'completed')
+        sales.value.filter(s => s.status === 'completed' && s.storeId === currentStoreId.value)
     );
     
     /**
-     * Obtiene ventas pendientes (con deuda)
+     * Obtiene ventas pendientes (con deuda) de la tienda actual
      */
     const pendingSales = computed(() => 
-        sales.value.filter(s => hasPendingDebt(s))
+        sales.value.filter(s => hasPendingDebt(s) && s.storeId === currentStoreId.value)
     );
     
     /**
-     * Total de ventas del día
+     * Total de ventas del día para la tienda actual
      */
     const todaySalesTotal = computed(() => {
         const today = new Date().toDateString();
         return sales.value
+        .filter(s => s.storeId === currentStoreId.value)
         .filter(s => new Date(s.createdAt).toDateString() === today)
         .reduce((total, s) => total + s.total, 0);
     });
@@ -83,6 +89,7 @@ export const useSalesStore = defineStore('sales', () => {
         const currentYear = now.getFullYear();
         
         return sales.value
+        .filter(s => s.storeId === currentStoreId.value)
         .filter(s => {
             const saleDate = new Date(s.createdAt);
             return saleDate.getMonth() === currentMonth && 
@@ -97,6 +104,7 @@ export const useSalesStore = defineStore('sales', () => {
     const todayProfit = computed(() => {
         const today = new Date().toDateString();
         return sales.value
+        .filter(s => s.storeId === currentStoreId.value)
         .filter(s => new Date(s.createdAt).toDateString() === today)
         .reduce((total, s) => total + (s.profit || 0), 0);
     });
@@ -106,6 +114,7 @@ export const useSalesStore = defineStore('sales', () => {
      */
     const totalPendingDebt = computed(() => {
         return sales.value
+        .filter(s => s.storeId === currentStoreId.value)
         .filter(s => hasPendingDebt(s))
         .reduce((total, s) => total + s.amountDue, 0);
     });
@@ -115,6 +124,13 @@ export const useSalesStore = defineStore('sales', () => {
      */
     const filteredSales = computed(() => {
         let result = [...sales.value];
+        
+        // Filtrar por tienda actual
+        if (currentStoreId.value) {
+            result = result.filter(s => s.storeId === currentStoreId.value);
+        } else {
+            result = [];
+        }
         
         // Filtrar por búsqueda
         if (activeFilters.value.search) {
