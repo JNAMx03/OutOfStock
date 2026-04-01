@@ -6,6 +6,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useSalesStore } from '@/stores/sales';
+import { useStoresStore } from '@/stores/stores';
 import type { Client, ClientFilter, ClientSortBy } from '@/models/Client';
 import { generateClientId, hasActiveDebt, isFrequentClient } from '@/models/Client';
 
@@ -28,22 +29,30 @@ export const useClientsStore = defineStore('clients', () => {
     // Texto de búsqueda
     const searchQuery = ref('');
 
+    // Store de tienda actual
+    const storesStore = useStoresStore();
+
     // ============================================
     // GETTERS (Computed)
     // ============================================
 
     /**
-     * Construye la lista de clientes a partir de las ventas.
+     * Construye la lista de clientes a partir de las ventas de la tienda seleccionada.
      * Agrupa ventas por clientId (teléfono o nombre).
      * Solo incluye ventas que tienen clientInfo.
      */
     const allClients = computed((): Client[] => {
         const salesStore = useSalesStore();
+        const currentStoreId = storesStore.currentStoreId;
+
+        if (!currentStoreId) return [];
 
         // Acumulador: clientId → Client parcial
         const clientMap: Record<string, Client> = {};
 
-        salesStore.sales.forEach(sale => {
+        salesStore.sales
+            .filter(sale => sale.storeId === currentStoreId)
+            .forEach(sale => {
             // Solo procesar ventas que tienen información del cliente
             if (!sale.customer?.name) return;
             // Excluir ventas canceladas
@@ -182,14 +191,15 @@ export const useClientsStore = defineStore('clients', () => {
      */
     function getSalesByClient(clientId: string) {
         const salesStore = useSalesStore();
+        const currentStoreId = storesStore.currentStoreId;
         const client = getClientById(clientId);
-        if (!client) return [];
+        if (!client || !currentStoreId) return [];
 
         return salesStore.sales
-        .filter(s => client.saleIds.includes(s.id))
-        .sort((a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
+            .filter(s => s.storeId === currentStoreId && client.saleIds.includes(s.id))
+            .sort((a, b) =>
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
     }
 
     /**
