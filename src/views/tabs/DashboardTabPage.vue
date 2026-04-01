@@ -188,10 +188,7 @@
 
     //stats de ventas
     const todaySalesTotal = computed(() => salesStore.todaySalesTotal);
-    const todaySalesCount = computed(() => {
-        const today = new Date().toDateString();
-        return salesStore.sales.filter(s=> new Date(s.createdAt).toDateString() === today).length;
-    });
+    const todaySalesCount = computed(() => salesStore.todaySalesCount);
 
     // Lifecycle
     onMounted(async () => {

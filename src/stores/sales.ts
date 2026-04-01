@@ -110,6 +110,17 @@ export const useSalesStore = defineStore('sales', () => {
     });
     
     /**
+     * Cantidad de ventas del día
+     */
+    const todaySalesCount = computed(() => {
+        const today = new Date().toDateString();
+        return sales.value
+        .filter(s => s.storeId === currentStoreId.value)
+        .filter(s => new Date(s.createdAt).toDateString() === today)
+        .length;
+    });
+    
+    /**
      * Total de deudas pendientes
      */
     const totalPendingDebt = computed(() => {
@@ -518,6 +529,7 @@ export const useSalesStore = defineStore('sales', () => {
         todaySalesTotal,
         monthSalesTotal,
         todayProfit,
+        todaySalesCount,
         totalPendingDebt,
         filteredSales,
         
