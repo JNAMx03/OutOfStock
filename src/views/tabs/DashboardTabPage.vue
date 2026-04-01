@@ -214,11 +214,14 @@
         
     });
 
-    // Watch para recargar productos si cambia la tienda
+    // Watch para recargar productos y notificaciones si cambia la tienda
     watch(() => storesStore.currentStoreId, async (newStoreId) => {
-    if (newStoreId) {
-        await productsStore.fetchProducts(newStoreId);
-    }
+        if (newStoreId) {
+            await productsStore.fetchProducts(newStoreId);
+            if (authStore.user) {
+                await notificationsStore.fetchNotifications(newStoreId, authStore.user.id);
+            }
+        }
     });
 
     // Funciones

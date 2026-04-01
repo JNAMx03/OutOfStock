@@ -250,19 +250,18 @@
      * Notificaciones filtradas según el segmento seleccionado
      */
     const filteredNotifications = computed(() => {
+        const currentStoreNotifs = notificationsStore.currentStoreNotifications;
         if (selectedFilter.value === 'all') {
-            return notificationsStore.notifications;
+            return currentStoreNotifs;
         }
-        return notificationsStore.notifications.filter(
-            n => n.type === selectedFilter.value
-        );
+        return currentStoreNotifs.filter(n => n.type === selectedFilter.value);
     });
 
     /**
      * ¿Hay notificaciones leídas para mostrar el botón "Limpiar"?
      */
     const hasReadNotifications = computed(() =>
-        notificationsStore.notifications.some(n => n.isRead)
+        notificationsStore.currentStoreNotifications.some(n => n.isRead)
     );
 
     // ============================================

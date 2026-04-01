@@ -14,6 +14,7 @@ import type {
 } from '@/models/Notification';
 import { getDefaultPreferences } from '@/models/Notification';
 import * as notificationsService from '@/services/notifications.service';
+import { useStoresStore } from '@/stores/stores';
 
 // ============================================
 // STORE DE NOTIFICACIONES
@@ -37,15 +38,25 @@ export const useNotificationsStore = defineStore('notifications', () => {
     const currentStoreId = ref<string | null>(null);
     const currentUserId = ref<string | null>(null);
 
+    // Store de tiendas
+    const storesStore = useStoresStore();
+
     // ============================================
     // GETTERS (Computed)
     // ============================================
     
     /**
-     * Solo las notificaciones NO leídas
+     * Notificaciones de la tienda seleccionada
+     */
+    const currentStoreNotifications = computed(() =>
+        notifications.value.filter(n => n.storeId === storesStore.currentStoreId)
+    );
+
+    /**
+     * Solo las notificaciones NO leídas de la tienda seleccionada
      */
     const unreadNotifications = computed(() =>
-        notifications.value.filter(n => !n.isRead)
+        currentStoreNotifications.value.filter(n => !n.isRead)
     );
     
     /**
@@ -61,34 +72,34 @@ export const useNotificationsStore = defineStore('notifications', () => {
     const hasUnread = computed(() => unreadCount.value > 0);
     
     /**
-     * Solo las alertas de stock bajo (no leídas)
+     * Solo las alertas de stock bajo (no leídas) de la tienda seleccionada
      * Para el Dashboard de inventario
      */
     const stockAlerts = computed(() =>
-        notifications.value.filter(n => n.type === 'stock_alert' && !n.isRead)
+        currentStoreNotifications.value.filter(n => n.type === 'stock_alert' && !n.isRead)
     );
     
     /**
-     * Solo las alertas de deuda (no leídas)
+     * Solo las alertas de deuda (no leídas) de la tienda seleccionada
      * Para el módulo de cartera
      */
     const debtAlerts = computed(() =>
-        notifications.value.filter(n => n.type === 'debt_alert' && !n.isRead)
+        currentStoreNotifications.value.filter(n => n.type === 'debt_alert' && !n.isRead)
     );
     
     /**
-     * Invitaciones pendientes (no leídas)
+     * Invitaciones pendientes (no leídas) de la tienda seleccionada
      */
     const pendingInvitations = computed(() =>
-        notifications.value.filter(n => n.type === 'invitation' && !n.isRead)
+        currentStoreNotifications.value.filter(n => n.type === 'invitation' && !n.isRead)
     );
     
     /**
-     * Notificaciones agrupadas por tipo para la UI
+     * Notificaciones agrupadas por tipo para la UI (solo tienda seleccionada)
      */
     const groupedByType = computed(() => {
         const groups: Record<string, Notification[]> = {};
-        notifications.value.forEach(n => {
+        currentStoreNotifications.value.forEach(n => {
         if (!groups[n.type]) groups[n.type] = [];
         groups[n.type].push(n);
         });
@@ -366,6 +377,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
         isLoading,
         
         // Getters
+        currentStoreNotifications,
         unreadNotifications,
         unreadCount,
         hasUnread,
