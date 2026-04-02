@@ -21,8 +21,10 @@ export const useStoresStore = defineStore('stores', () => {
     // Lista de todas las tiendas del usuario
     const stores = ref<Store[]>([]);
     
-    // ID de la tienda actualmente seleccionada
-    const currentStoreId = ref<string | null>(null);
+    // ID de la tienda actualmente seleccionada (persistido en localStorage)
+    const currentStoreId = ref<string | null>(
+        localStorage.getItem('currentStoreId') || null
+    );
     
     // Estado de carga
     const isLoading = ref(false);
@@ -91,6 +93,7 @@ export const useStoresStore = defineStore('stores', () => {
             // Si hay tiendas y no hay una seleccionada, seleccionar la primera
             if (stores.value.length > 0 && !currentStoreId.value) {
                 currentStoreId.value = stores.value[0].id;
+                localStorage.setItem('currentStoreId', stores.value[0].id);
             }
             
             return { success: true };
@@ -118,6 +121,7 @@ export const useStoresStore = defineStore('stores', () => {
             
             // Seleccionar la nueva tienda
             currentStoreId.value = newStore.id;
+            localStorage.setItem('currentStoreId', newStore.id);
             
             return { success: true, store: newStore };
         } catch (error) {
@@ -255,6 +259,7 @@ export const useStoresStore = defineStore('stores', () => {
         
         if (store) {
         currentStoreId.value = storeId;
+        localStorage.setItem('currentStoreId', storeId);
         return { success: true };
         }
         
@@ -274,6 +279,7 @@ export const useStoresStore = defineStore('stores', () => {
     function clear() {
         stores.value = [];
         currentStoreId.value = null;
+        localStorage.removeItem('currentStoreId');
     }
 
     // ============================================

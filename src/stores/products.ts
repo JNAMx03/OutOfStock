@@ -213,7 +213,7 @@ export const useProductsStore = defineStore('products', () => {
             // Datos mock de ejemplo (en producción vendrán de DynamoDB)
             const mockProducts: Product[] = [
                 {
-                id: `product-${Date.now()}-1`,
+                id: `product-mock-1`,
                 storeId,
                 name: 'Cerveza Corona 355ml',
                 description: 'Cerveza mexicana premium',
@@ -231,7 +231,7 @@ export const useProductsStore = defineStore('products', () => {
                 createdBy: 'user-1',
                 },
                 {
-                id: `product-${Date.now()}-2`,
+                id: `product-mock-2`,
                 storeId,
                 name: 'Coca-Cola 2L',
                 description: 'Bebida refrescante',

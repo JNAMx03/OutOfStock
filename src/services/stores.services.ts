@@ -45,7 +45,7 @@ export async function getAllStores(userId: string): Promise<Store[]> {
     // Retornar datos de ejemplo
     const mockStores: Store[] = [
       {
-        id: `store-${Date.now()}`,
+        id: `store-mock-1`,
         name: 'Tienda Principal',
         description: 'Mi primera tienda de inventario',
         type: 'retail',
