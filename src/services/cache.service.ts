@@ -10,7 +10,7 @@ import { toRaw } from 'vue';
 const DB_NAME = 'InventoryAppCache';
 // Versión de la base de datos
 // Si cambias la estructura, incrementa este número
-const DB_VERSION = 2;
+const DB_VERSION = 4;
 
 // Nombres de los "almacenes" (equivalente a tablas)
 export const STORES = {

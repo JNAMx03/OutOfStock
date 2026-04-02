@@ -4,7 +4,7 @@
 // IMPORTS
 // ============================================
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import type { 
     Sale, 
     CreateSaleData, 
@@ -21,6 +21,7 @@ import {
 import { useProductsStore } from './products';
 import { useNotificationsStore } from '@/stores/notifications';
 import { useStoresStore } from '@/stores/stores';
+import * as cacheService from '@/services/cache.service';
 
 // ============================================
 // STORE DE VENTAS
@@ -205,23 +206,53 @@ export const useSalesStore = defineStore('sales', () => {
     /**
      * 📋 FETCH SALES - Obtiene ventas de una tienda
      */
-    async function fetchSales(storeId: string) {
+    async function fetchSales(storeId: string, forceRefresh: boolean = false) {
+        // Si ya hay ventas cargadas para esta tienda y no es refresh forzado, no hacer nada
+        if (sales.value.some(s => s.storeId === storeId) && !forceRefresh) {
+            console.log('✅ Ventas ya cargadas, usando caché local');
+            return { success: true };
+        }
+        
         isLoading.value = true;
         
         try {
-            console.log('📋 Cargando ventas de la tienda:', storeId);
+            // ============================================
+            // PASO A: Intentar cargar desde caché (rápido)
+            // ============================================
+            if (!forceRefresh) {
+                const cacheKey = `sales_${storeId}`;
+                const isValid = await cacheService.isCacheValid(cacheKey, 30); // válido 30 min
+
+                if (isValid) {
+                    // Cargar desde IndexedDB
+                    const cachedSales = await cacheService.getItemsByStore<Sale>(
+                        cacheService.STORES.SALES,
+                        storeId
+                    );
+
+                    if (cachedSales.length > 0) {
+                        // Agregar las ventas de esta tienda, manteniendo las de otras tiendas
+                        const otherStoresSales = sales.value.filter(s => s.storeId !== storeId);
+                        sales.value = [...otherStoresSales, ...cachedSales];
+                        isLoading.value = false;
+                        console.log(`⚡ ${cachedSales.length} ventas cargadas desde caché para tienda ${storeId}:`, cachedSales.map(s => s.saleNumber));
+                        return { success: true, fromCache: true };
+                    }
+                }
+            }
+
+            // ============================================
+            // PASO B: Cargar datos frescos
+            // ============================================
+            console.log('📦 Cargando ventas frescas para tienda:', storeId);
             
             // TODO: Obtener desde DynamoDB/AppSync
-            // Por ahora, mantener ventas en memoria
+            // Por ahora, no hay datos frescos que cargar
             
-            // Solo cargar si no hay ventas para esta tienda
-            const storeSales = sales.value.filter(s => s.storeId === storeId);
+            // Si no hay ventas en caché y no hay datos frescos, simplemente retornar
+            console.log('No hay ventas para cargar');
             
-            if (storeSales.length === 0) {
-                console.log('No hay ventas mock para cargar');
-            }
-            
-            return { success: true };
+            return { success: true, fromCache: false };
         } catch (error) {
             console.error('❌ Error al cargar ventas:', error);
             return { success: false, error: 'Error al cargar ventas' };
@@ -295,6 +326,16 @@ export const useSalesStore = defineStore('sales', () => {
             
             sales.value.push(newSale);
             
+            // Guardar en caché
+            const storeSales = sales.value.filter(s => s.storeId === storeId);
+            try {
+                await cacheService.saveItems(cacheService.STORES.SALES, storeSales, storeId);
+                await cacheService.saveLastSync(`sales_${storeId}`);
+                console.log('💾 Nueva venta guardada en caché:', newSale.id, 'para tienda:', storeId);
+            } catch (cacheError) {
+                console.error('❌ Error al guardar venta en caché:', cacheError);
+            }
+            
             // Actualizar stock de productos
             const productsStore = useProductsStore();
             for (const item of data.items) {
@@ -334,6 +375,12 @@ export const useSalesStore = defineStore('sales', () => {
             await new Promise(resolve => setTimeout(resolve, 500));
             
             sales.value[index] = updatedSale;
+            
+            // Guardar en caché
+            const storeSales = sales.value.filter(s => s.storeId === updatedSale.storeId);
+            await cacheService.saveItems(cacheService.STORES.SALES, storeSales, updatedSale.storeId);
+            await cacheService.saveLastSync(`sales_${updatedSale.storeId}`);
+            console.log('💾 Venta actualizada guardada en caché');
             
             console.log('✅ Venta actualizada exitosamente');
             return { success: true, sale: updatedSale };
@@ -398,6 +445,12 @@ export const useSalesStore = defineStore('sales', () => {
             await new Promise(resolve => setTimeout(resolve, 500));
             
             sales.value[index] = updatedSale;
+            
+            // Guardar en caché
+            const storeSales = sales.value.filter(s => s.storeId === sale.storeId);
+            await cacheService.saveItems(cacheService.STORES.SALES, storeSales, sale.storeId);
+            await cacheService.saveLastSync(`sales_${sale.storeId}`);
+            console.log('💾 Pago agregado guardado en caché');
             
             console.log('✅ Pago registrado exitosamente');
             return { success: true, sale: updatedSale };
@@ -545,6 +598,18 @@ export const useSalesStore = defineStore('sales', () => {
         clear,
         checkAndAlertDebts,
     };
+
+    // ============================================
+    // WATCHERS
+    // ============================================
+    
+    // Cargar ventas cuando cambia la tienda actual
+    watch(currentStoreId, async (newStoreId, oldStoreId) => {
+        if (newStoreId && newStoreId !== oldStoreId) {
+            console.log('🏪 Tienda cambió, cargando ventas para:', newStoreId);
+            await fetchSales(newStoreId);
+        }
+    });
 });
 
 // ============================================
