@@ -2,7 +2,7 @@ import {defineStore} from 'pinia';
 import {ref, computed} from 'vue';
 //import {Auth} from 'aws-amplify';
 import { signIn, signOut, signUp, confirmSignUp, resendSignUpCode, getCurrentUser, fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth';
-import { clearAllCache } from '@/services/cache.service';
+// import { clearAllCache } from '@/services/cache.service';
 
 //INTERFACES
 
@@ -229,7 +229,7 @@ export const useAuthStore = defineStore('auth', () => {
             await signOut();
             user.value = null;
             authToken.value = null;
-            await clearAllCache();
+            // await clearAllCache();
         }catch(error){
             console.error('Error en logout;', error);
         }

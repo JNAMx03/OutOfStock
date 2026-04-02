@@ -10,12 +10,13 @@ import { toRaw } from 'vue';
 const DB_NAME = 'InventoryAppCache';
 // Versión de la base de datos
 // Si cambias la estructura, incrementa este número
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 // Nombres de los "almacenes" (equivalente a tablas)
 export const STORES = {
     PRODUCTS:      'products',     // Productos del inventario
     SALES:         'sales',        // Ventas
+    STORES:        'stores',       // Tiendas del usuario
     NOTIFICATIONS: 'notifications', // Notificaciones
     METADATA:      'metadata',     // Info de caché (timestamps, versiones)
 } as const;
@@ -57,6 +58,14 @@ function openDatabase(): Promise<IDBDatabase> {
                 });
                 salesStore.createIndex('storeId', 'storeId', { unique: false });
                 salesStore.createIndex('createdAt', 'createdAt', { unique: false });
+            }
+
+            // Crear almacén de tiendas
+            if (!db.objectStoreNames.contains(STORES.STORES)) {
+                const storesStore = db.createObjectStore(STORES.STORES, {
+                    keyPath: 'id',
+                });
+                storesStore.createIndex('ownerId', 'ownerId', { unique: false });
             }
 
             // Crear almacén de notificaciones
@@ -195,6 +204,43 @@ export async function getItemsByStore<T>(
 }
 
 /**
+ * 📖 OBTENER POR OWNER - Lee todos los items de un owner (para tiendas)
+ * @param storeName - Nombre del almacén
+ * @param ownerId - ID del owner
+ * @returns Array de items, o [] si hay error
+ */
+export async function getItemsByOwner<T>(
+  storeName: StoreName,
+  ownerId: string
+): Promise<T[]> {
+    try {
+        const db = await openDatabase();
+
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(storeName, 'readonly');
+            const objectStore = transaction.objectStore(storeName);
+            const index = objectStore.index('ownerId');
+            const request = index.getAll(ownerId);
+
+            request.onsuccess = (event) => {
+                const results = (event.target as IDBRequest).result as T[];
+                db.close();
+                resolve(results || []);
+            };
+
+            request.onerror = (event) => {
+                console.error(`❌ Error al leer ${storeName}:`, event);
+                db.close();
+                reject(request.error);
+            };
+        });
+    } catch (error) {
+        console.warn(`⚠️ Cache no disponible (${storeName}):`, error);
+        return [];
+    }
+}
+
+/**
  * 🔍 OBTENER POR ID - Lee un item específico
  * @param storeName - Nombre del almacén
  * @param id - ID del item
@@ -230,28 +276,43 @@ export async function getItemById<T>(
 }
 
 /**
- * 🗑️ LIMPIAR - Elimina todos los datos de una tienda en un almacén
- * @param storeName - Nombre del almacén
- * @param storeId - ID de la tienda
+ * � GUARDAR TIENDAS - Guarda todas las tiendas de un usuario
+ * Reemplaza todas las tiendas existentes del usuario
+ * @param stores - Tiendas a guardar
+ * @param ownerId - ID del usuario propietario
  */
-export async function clearStoreData(
-  storeName: StoreName,
-  storeId: string
+export async function saveStores<T extends { id: string; ownerId: string }>(
+  stores: T[],
+  ownerId: string
 ): Promise<void> {
     try {
         const db = await openDatabase();
 
-        return new Promise((resolve, reject) => {
-            const transaction = db.transaction(storeName, 'readwrite');
-            const objectStore = transaction.objectStore(storeName);
-            const index = objectStore.index('storeId');
-            const request = index.openCursor(IDBKeyRange.only(storeId));
+        const normalizeItem = <U>(item: U): U => {
+            const raw = toRaw(item as any) as U;
+            try {
+                return JSON.parse(JSON.stringify(raw));
+            } catch {
+                return raw;
+            }
+        };
 
-            request.onsuccess = (event) => {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(STORES.STORES, 'readwrite');
+            const objectStore = transaction.objectStore(STORES.STORES);
+
+            // Primero eliminar las tiendas existentes del usuario
+            const index = objectStore.index('ownerId');
+            const deleteRequest = index.openCursor(IDBKeyRange.only(ownerId));
+
+            deleteRequest.onsuccess = (event) => {
                 const cursor = (event.target as IDBRequest).result;
                 if (cursor) {
-                cursor.delete();
-                cursor.continue();
+                    cursor.delete();
+                    cursor.continue();
+                } else {
+                    // Después de eliminar, insertar las nuevas
+                    stores.forEach(store => objectStore.put(normalizeItem(store)));
                 }
             };
 
@@ -260,13 +321,14 @@ export async function clearStoreData(
                 resolve();
             };
 
-            transaction.onerror = () => {
+            transaction.onerror = (event) => {
+                console.error('❌ Error al guardar tiendas:', event);
                 db.close();
                 reject(transaction.error);
             };
         });
     } catch (error) {
-        console.warn(`⚠️ Error al limpiar caché:`, error);
+        console.warn('⚠️ Cache no disponible para tiendas:', error);
     }
 }
 
@@ -347,23 +409,40 @@ export async function isCacheValid(
 }
 
 /**
- * 🧹 LIMPIAR TODA LA BASE DE DATOS
- * Útil al cerrar sesión para liberar espacio
+ * 🧹 LIMPIAR TIENDAS - Elimina todas las tiendas de un usuario
+ * @param ownerId - ID del usuario
  */
-export async function clearAllCache(): Promise<void> {
-    return new Promise((resolve, reject) => {
-        const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
+export async function clearStores(ownerId: string): Promise<void> {
+    try {
+        const db = await openDatabase();
 
-        deleteRequest.onsuccess = () => {
-            console.log('✅ Caché limpiado completamente');
-            resolve();
-        };
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(STORES.STORES, 'readwrite');
+            const objectStore = transaction.objectStore(STORES.STORES);
+            const index = objectStore.index('ownerId');
+            const request = index.openCursor(IDBKeyRange.only(ownerId));
 
-        deleteRequest.onerror = () => {
-            console.error('❌ Error al limpiar caché');
-            reject(deleteRequest.error);
-        };
-    });
+            request.onsuccess = (event) => {
+                const cursor = (event.target as IDBRequest).result;
+                if (cursor) {
+                    cursor.delete();
+                    cursor.continue();
+                }
+            };
+
+            transaction.oncomplete = () => {
+                db.close();
+                resolve();
+            };
+
+            transaction.onerror = () => {
+                db.close();
+                reject(transaction.error);
+            };
+        });
+    } catch (error) {
+        console.warn('⚠️ Error al limpiar tiendas:', error);
+    }
 }
 
 // ============================================

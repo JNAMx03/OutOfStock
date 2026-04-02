@@ -8,6 +8,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Store, CreateStoreData, UpdateStoreData } from '@/models/Store';
 import * as storesService from '@/services/stores.services';
+import * as cacheService from '@/services/cache.service';
 
 // ============================================
 // STORE DE TIENDAS
@@ -76,19 +77,49 @@ export const useStoresStore = defineStore('stores', () => {
         isLoading.value = true;
         
         try {
-            // Obtener tiendas desde el servicio (API)
-            // Por ahora retorna mock, pero solo si NO hay tiendas creadas
-            console.log('📦 Obteniendo tiendas desde el servicio...');
-            
-            // Si ya hay tiendas en el store, mantenerlas
-            if (stores.value.length > 0) {
-                console.log('✅ Usando tiendas del store local');
-                return { success: true };
+            // ============================================
+            // PASO A: Intentar cargar desde caché (rápido)
+            // ============================================
+            if (!forceRefresh) {
+                const cacheKey = `stores_${userId}`;
+                const isValid = await cacheService.isCacheValid(cacheKey, 60); // válido 60 min
+
+                if (isValid) {
+                    // Cargar desde IndexedDB
+                    const cachedStores = await cacheService.getItemsByOwner<Store>(
+                        cacheService.STORES.STORES,
+                        userId
+                    );
+
+                    if (cachedStores.length > 0) {
+                        stores.value = cachedStores;
+                        // Si hay tiendas y no hay una seleccionada, seleccionar la primera
+                        if (!currentStoreId.value) {
+                            currentStoreId.value = stores.value[0].id;
+                            localStorage.setItem('currentStoreId', stores.value[0].id);
+                        }
+                        isLoading.value = false;
+                        console.log(`⚡ ${cachedStores.length} tiendas cargadas desde caché:`, cachedStores.map(s => s.name));
+                        return { success: true, fromCache: true };
+                    }
+                }
             }
+
+            // ============================================
+            // PASO B: Cargar datos frescos
+            // ============================================
+            console.log('📦 Cargando tiendas frescas para usuario:', userId);
             
-            // Solo cargar mock si no hay tiendas
+            // Obtener tiendas desde el servicio (API)
             const fetchedStores = await storesService.getAllStores(userId);
             stores.value = fetchedStores;
+            
+            // ============================================
+            // PASO C: Guardar en caché para la próxima vez
+            // ============================================
+            await cacheService.saveStores(stores.value, userId);
+            await cacheService.saveLastSync(`stores_${userId}`);
+            console.log('💾 Tiendas guardadas en caché');
             
             // Si hay tiendas y no hay una seleccionada, seleccionar la primera
             if (stores.value.length > 0 && !currentStoreId.value) {
@@ -96,7 +127,7 @@ export const useStoresStore = defineStore('stores', () => {
                 localStorage.setItem('currentStoreId', stores.value[0].id);
             }
             
-            return { success: true };
+            return { success: true, fromCache: false };
         } catch (error) {
         console.error('Error al obtener tiendas:', error);
         return { success: false, error: 'Error al cargar tiendas' };
@@ -118,6 +149,11 @@ export const useStoresStore = defineStore('stores', () => {
             
             // Agregar a la lista local
             stores.value.push(newStore);
+            
+            // Guardar en caché
+            await cacheService.saveStores(stores.value, userId);
+            await cacheService.saveLastSync(`stores_${userId}`);
+            console.log('💾 Nueva tienda guardada en caché:', newStore.id);
             
             // Seleccionar la nueva tienda
             currentStoreId.value = newStore.id;
