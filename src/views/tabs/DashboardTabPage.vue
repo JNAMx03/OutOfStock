@@ -108,16 +108,6 @@
                 </div>
             </div>
 
-            <!-- Mensaje de construcción -->
-            <ion-card class="info-card">
-                <ion-card-content>
-                    <ion-icon :icon="constructOutline" color="medium"></ion-icon>
-                    <p>
-                        <strong>Dashboard en construcción</strong><br>
-                        <small>Las funcionalidades se activarán en las siguientes fases</small>
-                    </p>
-                </ion-card-content>
-            </ion-card>
         </ion-content>
     </ion-page>
 </template>
@@ -128,7 +118,7 @@
 
 <script setup lang="ts">
     import { ref, computed, onMounted, watch } from 'vue';
-    import { useRouter } from 'vue-router';
+    // import { useRouter } from 'vue-router';
     import {
         IonPage,
         IonHeader,
@@ -146,6 +136,7 @@
         IonLabel,
         IonSelect,
         IonSelectOption,
+        modalController,
     } from '@ionic/vue';
     import {
         notificationsOutline,
@@ -154,7 +145,6 @@
         cashOutline,
         alertCircleOutline,
         addCircleOutline,
-        constructOutline,
     } from 'ionicons/icons';
 
     import { useAuthStore } from '@/stores/auth';
@@ -162,8 +152,10 @@
     import { useProductsStore } from '@/stores/products';
     import { useSalesStore } from '@/stores/sales';
     import { useNotificationsStore } from '@/stores/notifications';
+    import NewSaleModal from '@/components/sales/NewSaleModal.vue';
+    import ProductFormModal from '@/components/products/ProductFormModal.vue';
 
-    const router = useRouter();
+    // const router = useRouter();
     const authStore = useAuthStore();
     const storesStore = useStoresStore();
     const productsStore = useProductsStore();
@@ -253,14 +245,25 @@
         await modal.present();
     }
 
-    function goToAddProduct() {
-        router.push('/tabs/inventory');
+    async function goToAddProduct() {
+        // router.push('/tabs/inventory');
         // Después de navegar, abrir el modal automáticamente sería ideal
         // pero por simplicidad, el usuario hará clic en el botón +
+        const modal = await modalController.create({
+            component: ProductFormModal,
+        });
+        
+        await modal.present();
     }
 
-    function goToNewSale() {
-        router.push('/tabs/sales/new');
+    async function goToNewSale() {
+        // router.push('/tabs/sales');
+
+        const modal = await modalController.create({
+            component: NewSaleModal,
+        });
+        
+        await modal.present();
     }
 </script>
 
