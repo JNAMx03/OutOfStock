@@ -15,6 +15,7 @@ import type {
 import { getDefaultPreferences } from '@/models/Notification';
 import * as notificationsService from '@/services/notifications.service';
 import { useStoresStore } from '@/stores/stores';
+import * as cacheService from '@/services/cache.service';
 
 // ============================================
 // STORE DE NOTIFICACIONES
@@ -115,12 +116,46 @@ export const useNotificationsStore = defineStore('notifications', () => {
      * @param storeId - ID de la tienda
      * @param userId - ID del usuario (para cargar preferencias)
      */
-    async function fetchNotifications(storeId: string, userId: string) {
+    async function fetchNotifications(storeId: string, userId: string, forceRefresh: boolean = false) {
+        // Si ya hay notificaciones cargadas para esta tienda y no es refresh forzado, no hacer nada
+        if (notifications.value.length > 0 && currentStoreId.value === storeId && !forceRefresh) {
+            console.log('✅ Notificaciones ya cargadas, usando caché local');
+            return { success: true };
+        }
+        
         isLoading.value = true;
         currentStoreId.value = storeId;
         currentUserId.value = userId;
         
         try {
+            // ============================================
+            // PASO A: Intentar cargar desde caché (rápido)
+            // ============================================
+            if (!forceRefresh) {
+                const cacheKey = `notifications_${storeId}`;
+                const isValid = await cacheService.isCacheValid(cacheKey, 30); // válido 30 min
+
+                if (isValid) {
+                    // Cargar desde IndexedDB
+                    const cachedNotifications = await cacheService.getItemsByStore<Notification>(
+                        cacheService.STORES.NOTIFICATIONS,
+                        storeId
+                    );
+
+                    if (cachedNotifications.length > 0) {
+                        notifications.value = cachedNotifications;
+                        isLoading.value = false;
+                        console.log(`⚡ ${cachedNotifications.length} notificaciones cargadas desde caché:`, cachedNotifications.map(n => n.title));
+                        return { success: true, fromCache: true };
+                    }
+                }
+            }
+
+            // ============================================
+            // PASO B: Cargar datos frescos
+            // ============================================
+            console.log('📦 Cargando notificaciones frescas para tienda:', storeId);
+            
             // Cargar notificaciones y preferencias en paralelo
             const [fetchedNotifications, fetchedPreferences] = await Promise.all([
                 notificationsService.getNotifications(storeId),
@@ -130,7 +165,14 @@ export const useNotificationsStore = defineStore('notifications', () => {
             notifications.value = fetchedNotifications;
             preferences.value = fetchedPreferences;
             
-            return { success: true };
+            // ============================================
+            // PASO C: Guardar en caché para la próxima vez
+            // ============================================
+            await cacheService.saveItems(cacheService.STORES.NOTIFICATIONS, notifications.value, storeId);
+            await cacheService.saveLastSync(`notifications_${storeId}`);
+            console.log('💾 Notificaciones guardadas en caché');
+            
+            return { success: true, fromCache: false };
         } catch (error) {
             console.error('Error al cargar notificaciones:', error);
             return { success: false, error: 'Error al cargar notificaciones' };
@@ -250,6 +292,27 @@ export const useNotificationsStore = defineStore('notifications', () => {
         if (isDuplicate) return;
         
         try {
+            // Si no hay notificaciones cargadas para esta tienda, intentar cargar desde caché primero
+            if (notifications.value.length === 0 || currentStoreId.value !== storeId) {
+                try {
+                    const cacheKey = `notifications_${storeId}`;
+                    const isValid = await cacheService.isCacheValid(cacheKey, 30);
+                    if (isValid) {
+                        const cachedNotifications = await cacheService.getItemsByStore<Notification>(
+                            cacheService.STORES.NOTIFICATIONS,
+                            storeId
+                        );
+                        if (cachedNotifications.length > 0) {
+                            notifications.value = cachedNotifications;
+                            currentStoreId.value = storeId;
+                            console.log(`⚡ ${cachedNotifications.length} notificaciones cargadas desde caché antes de crear alerta`);
+                        }
+                    }
+                } catch (cacheError) {
+                    console.warn('No se pudo cargar notificaciones desde caché:', cacheError);
+                }
+            }
+
             // Determinar prioridad según nivel de stock
             // Si el stock es 0: prioridad alta (rojo)
             // Si el stock es menor al mínimo: prioridad media (amarillo)
@@ -276,6 +339,15 @@ export const useNotificationsStore = defineStore('notifications', () => {
             
             // Agregar al estado local (al inicio de la lista)
             notifications.value.unshift(newNotification);
+            
+            // Guardar en caché
+            try {
+                await cacheService.saveItems(cacheService.STORES.NOTIFICATIONS, notifications.value, storeId);
+                await cacheService.saveLastSync(`notifications_${storeId}`);
+                console.log('💾 Nueva notificación de stock guardada en caché:', newNotification.id, 'para tienda:', storeId);
+            } catch (cacheError) {
+                console.error('❌ Error al guardar notificación de stock en caché:', cacheError);
+            }
         
         } catch (error) {
             console.error('Error al crear alerta de stock:', error);
@@ -306,6 +378,27 @@ export const useNotificationsStore = defineStore('notifications', () => {
         if (isDuplicate) return;
         
         try {
+            // Si no hay notificaciones cargadas para esta tienda, intentar cargar desde caché primero
+            if (notifications.value.length === 0 || currentStoreId.value !== storeId) {
+                try {
+                    const cacheKey = `notifications_${storeId}`;
+                    const isValid = await cacheService.isCacheValid(cacheKey, 30);
+                    if (isValid) {
+                        const cachedNotifications = await cacheService.getItemsByStore<Notification>(
+                            cacheService.STORES.NOTIFICATIONS,
+                            storeId
+                        );
+                        if (cachedNotifications.length > 0) {
+                            notifications.value = cachedNotifications;
+                            currentStoreId.value = storeId;
+                            console.log(`⚡ ${cachedNotifications.length} notificaciones cargadas desde caché antes de crear alerta de deuda`);
+                        }
+                    }
+                } catch (cacheError) {
+                    console.warn('No se pudo cargar notificaciones desde caché:', cacheError);
+                }
+            }
+
             // Determinar prioridad según días vencida
             const priority = (data.daysOverdue && data.daysOverdue > 7) ? 'high' : 'medium';
             
@@ -326,6 +419,15 @@ export const useNotificationsStore = defineStore('notifications', () => {
             });
             
             notifications.value.unshift(newNotification);
+            
+            // Guardar en caché
+            try {
+                await cacheService.saveItems(cacheService.STORES.NOTIFICATIONS, notifications.value, storeId);
+                await cacheService.saveLastSync(`notifications_${storeId}`);
+                console.log('💾 Nueva notificación de deuda guardada en caché:', newNotification.id, 'para tienda:', storeId);
+            } catch (cacheError) {
+                console.error('❌ Error al guardar notificación de deuda en caché:', cacheError);
+            }
         
         } catch (error) {
             console.error('Error al crear alerta de deuda:', error);
