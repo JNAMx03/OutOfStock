@@ -141,6 +141,19 @@ const routes: Array<RouteRecordRaw> = [
   },
 
   // ==========================================
+  // RUTA DE PERFIL
+  // ==========================================
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('@/views/profile/ProfilePage.vue'),
+    meta: {
+      requiresAuth: true,
+      roles: ['owner', 'admin', 'seller'],
+    },
+  },
+
+  // ==========================================
   // RUTA 404 (Página no encontrada)
   // ==========================================
   {

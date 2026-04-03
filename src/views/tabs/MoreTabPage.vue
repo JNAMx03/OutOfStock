@@ -15,7 +15,7 @@
                     <ion-label>Mi Cuenta</ion-label>
                 </ion-list-header>
 
-                <ion-item button>
+                <ion-item button @click="router.push('/profile')">
                     <ion-icon :icon="personOutline" slot="start"></ion-icon>
                     <ion-label>Perfil</ion-label>
                 </ion-item>
